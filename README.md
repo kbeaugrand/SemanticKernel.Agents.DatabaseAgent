@@ -16,6 +16,46 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
+### Installation
+
+To use the Database Agent for Semantic Kernel, you must first install the package from NuGet.
+```bash
+dotnet add package SemanticKernel.Agents.DatabaseAgent
+```
+
+### Usage
+
+To use the Database Agent for Semantic Kernel, you must first create an instance of the `DatabaseAgent` class and provide the necessary configuration settings.
+
+```csharp
+using Microsoft.KernelMemory;
+using Microsoft.SemanticKernel;
+using SemanticKernel.Agents.DatabaseAgent;
+
+var memory = new KernelMemoryBuilder()
+               ... 
+                .Build();
+
+var kernelBuilder = Kernel.CreateBuilder()
+                ...
+                .Build();
+
+kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
+            {
+                // Configure the database connection
+                return new SqliteConnection(configuration.GetConnectionString("DefaultConnection"));
+            });
+
+var kernel = kernelBuilder.Build();
+
+var agent = await DBMSAgentFactory.CreateAgentAsync(kernel, memory);
+
+var chatHistory = new ChatHistory(question, AuthorRole.User);
+
+// execute the NL2SQL query
+var responses = await agent.InvokeWithFunctionCallingAsync(chatHistory)
+                                .ConfigureAwait(false);
+```
 
 ## Contributing
 
