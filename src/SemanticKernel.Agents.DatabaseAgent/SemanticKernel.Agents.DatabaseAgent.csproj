@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CA2007;IDE1006;SKEXP0001;SKEXP0110;OPENAI001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Prompts\AgentDescriptionGenerator.md" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- NuGet Package Settings -->
+    <Title>Semantic Kernel Database agent</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>
+      Microsoft's Semantic Kernel NL2SQL agent for databases. 
+      This agent can be used to generate SQL queries from natural language prompts.
+    </Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts\AgentInstructionsGenerator.md" />
+    <EmbeddedResource Include="Prompts\AgentNameGenerator.md" />
+    <EmbeddedResource Include="Prompts\AgentDescriptionGenerator.md" />
+    <EmbeddedResource Include="Prompts\ExplainTable.md" />
+    <EmbeddedResource Include="Prompts\WriteSQLQuery.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KernelMemory.Evaluation" Version="0.0.10" />
+    <PackageReference Include="Markdig" Version="0.40.0" />
+    <PackageReference Include="Microsoft.KernelMemory.Abstractions" Version="0.97.250211.1" />
+    <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.97.250211.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="1.41.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.41.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.41.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.41.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.41.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
