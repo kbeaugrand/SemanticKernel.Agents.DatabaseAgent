@@ -88,7 +88,7 @@ The Database Agent for Semantic Kernel provides the following quality assurance 
 
 You can create a custom quality assurance filter by implementing the `IQueryExecutionFilter` interface and registering it with the DI container.
 ```csharp
-kernelBuilder.Services.AddTransient<IQueryExecutionFilter, QueryRelevancyFilter>();
+kernelBuilder.Services.AddTransient<IQueryExecutionFilter, CustomQueryExecutionFilter>();
 
 public class CustomQueryExecutionFilter : IQueryExecutionFilter
 {
