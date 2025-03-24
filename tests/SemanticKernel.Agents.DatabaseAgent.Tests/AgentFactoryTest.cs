@@ -70,7 +70,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
 
             // Test
-            var agent = await DBMSAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
 
             // Assert
             Assert.IsNotNull(agent);
@@ -100,22 +100,27 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             // Arrange
             var evaluatorKernel = kernelBuilder.Build();
 
-            var agent = await DBMSAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
             var faithfulnessEvaluator = new FaithfulnessEvaluator(evaluatorKernel);
             var answerSimilarityEvaluator = new AnswerSimilarityEvaluator(evaluatorKernel);
 
             var chatHistory = new ChatHistory(question, AuthorRole.User);
 
             // Test
-            var responses = await agent.InvokeWithFunctionCallingAsync(chatHistory)
+            var responses = agent.InvokeAsync(chatHistory)
                                             .ConfigureAwait(false);
 
             // Assert
             Assert.IsNotNull(responses);
 
-            var score = await answerSimilarityEvaluator.EvaluateAsync(truth: expectedAnswer, responses[0].Content!);
+            await foreach (var response in responses)
+            {
+                Assert.IsNotNull(response.Content);
 
-            Assert.IsTrue(score > 0.8);
+                var score = await answerSimilarityEvaluator.EvaluateAsync(truth: expectedAnswer, response.Content!);
+
+                Assert.IsTrue(score > 0.8);
+            }
         }
     }
 }

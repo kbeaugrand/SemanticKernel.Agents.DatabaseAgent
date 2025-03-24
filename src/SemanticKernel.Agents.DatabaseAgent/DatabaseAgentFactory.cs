@@ -1,4 +1,5 @@
-﻿using Microsoft.KernelMemory;
+﻿using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -8,12 +9,10 @@ using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.KernelMemory.SemanticKernelPlugin;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
-public static class DBMSAgentFactory
+public static class DatabaseAgentFactory
 {
     private static PromptExecutionSettings promptExecutionSettings = new OpenAIPromptExecutionSettings
     {
@@ -28,7 +27,7 @@ public static class DBMSAgentFactory
     private static string _tableDescriptionPrompt = EmbeddedPromptProvider.ReadPrompt("ExplainTable");
     private static string _writeSQLQueryPrompt = EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery");
 
-    public static async Task<ChatCompletionAgent> CreateAgentAsync(
+    public static async Task<DatabaseKernelAgent> CreateAgentAsync(
             Kernel kernel,
             IKernelMemory memory,
             CancellationToken? cancellationToken = null)
@@ -39,7 +38,7 @@ public static class DBMSAgentFactory
                             .ConfigureAwait(false);
     }
 
-    private static async Task<ChatCompletionAgent> BuildAgentAsync(Kernel kernel, string tableDescriptions, IKernelMemory memory, CancellationToken cancellationToken)
+    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, string tableDescriptions, IKernelMemory memory, CancellationToken cancellationToken)
     {
         var agentDescription = await KernelFunctionFactory.CreateFromPrompt(_agentDescriptionPrompt, promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
@@ -64,9 +63,9 @@ public static class DBMSAgentFactory
 
         var agentKernel = kernel.Clone();
 
-        agentKernel.ImportPluginFromObject(new DBMSPlugin(memory, NullLoggerFactory.Instance));
+        agentKernel.ImportPluginFromObject(new DatabasePlugin(memory, NullLoggerFactory.Instance));
 
-        return new ChatCompletionAgent
+        return new DatabaseKernelAgent
         {
             Kernel = agentKernel,
             Name = agentName.GetValue<string>(),

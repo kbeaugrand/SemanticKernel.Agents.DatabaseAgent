@@ -10,18 +10,18 @@ using System.Data.Common;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
-public class DBMSPlugin
+public class DatabasePlugin
 {
-    private readonly ILogger<DBMSPlugin> _log;
+    private readonly ILogger<DatabasePlugin> _log;
     private readonly KernelFunction _writeSQLFunction;
 
     private readonly IKernelMemory _kernelMemory;
     private readonly ILoggerFactory? _loggerFactory;
 
-    public DBMSPlugin(IKernelMemory kernelMemory, ILoggerFactory? loggerFactory = null)
+    public DatabasePlugin(IKernelMemory kernelMemory, ILoggerFactory? loggerFactory = null)
     {
         this._loggerFactory = loggerFactory;
-        this._log = loggerFactory?.CreateLogger<DBMSPlugin>() ?? new NullLogger<DBMSPlugin>();
+        this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._kernelMemory = kernelMemory;
 
         this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
