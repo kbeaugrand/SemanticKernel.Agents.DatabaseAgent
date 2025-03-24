@@ -19,6 +19,7 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 ### Installation
 
 To use the Database Agent for Semantic Kernel, you must first install the package from NuGet.
+
 ```bash
 dotnet add package SemanticKernel.Agents.DatabaseAgent
 ```
@@ -106,7 +107,7 @@ We welcome contributions to enhance this project. Please fork the repository and
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
 
 ## Acknowledgments
 
