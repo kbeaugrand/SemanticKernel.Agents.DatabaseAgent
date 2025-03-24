@@ -7,8 +7,8 @@ internal static class EmbeddedPromptProvider
 {
     internal static string ReadPrompt(string promptName)
     {
-        var resourceStream = Assembly.GetExecutingAssembly()
-                                             .GetManifestResourceStream($"{Assembly.GetExecutingAssembly().GetName().Name}.Prompts.{promptName}.md");
+        var resourceStream = Assembly.GetCallingAssembly()
+                                             .GetManifestResourceStream($"{Assembly.GetCallingAssembly().GetName().Name}.Prompts.{promptName}.md");
 
         using var reader = new StreamReader(resourceStream!);
         var text = reader.ReadToEnd();

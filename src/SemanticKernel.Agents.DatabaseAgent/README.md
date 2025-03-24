@@ -1,10 +1,5 @@
 ﻿# DBMS Agent for Semantic Kernel
 
-[![Build & Test](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_tests.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_test.yml)
-[![Create Release](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml)
-[![Version](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)
-[![License](https://img.shields.io/github/license/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)
-
 ## Overview
 
 The Database Agent for Semantic Kernel is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL). The Agent is responsible for managing the storage and retrieval of data from the Semantic Kernel. 
@@ -15,7 +10,6 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 ### Prerequisites
 
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-
 
 ## Contributing
 

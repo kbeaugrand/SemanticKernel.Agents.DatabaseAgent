@@ -1,9 +1,4 @@
-﻿# DBMS Agent for Semantic Kernel
-
-[![Build & Test](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_tests.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_test.yml)
-[![Create Release](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml)
-[![Version](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)
-[![License](https://img.shields.io/github/license/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)](https://img.shields.io/github/v/release/kbeaugrand/SemanticKernel.Agents.DatabaseAgent)
+﻿# DBMS Agent Quality Assurance for Semantic Kernel
 
 ## Overview
 
@@ -11,53 +6,6 @@ The Database Agent for Semantic Kernel is a service that provides a database man
 This built on top of the [Microsoft's Semantic Kernel](https://github.com/microsoft/semantic-kernel) and leverages the [Microsoft's Kernel Memory](https://github.com/microsoft/kernel-memory) service to memorize database schema and relationships to provide a more efficient and accurate database management system.
 
 ## Getting Started
-
-### Prerequisites
-
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-
-### Installation
-
-To use the Database Agent for Semantic Kernel, you must first install the package from NuGet.
-```bash
-dotnet add package SemanticKernel.Agents.DatabaseAgent
-```
-
-### Usage
-
-To use the Database Agent for Semantic Kernel, you must first create an instance of the `DatabaseAgent` class and provide the necessary configuration settings.
-
-```csharp
-using Microsoft.KernelMemory;
-using Microsoft.SemanticKernel;
-using SemanticKernel.Agents.DatabaseAgent;
-
-var memory = new KernelMemoryBuilder()
-               ... 
-                .Build();
-
-var kernelBuilder = Kernel.CreateBuilder()
-                ...
-                .Build();
-
-kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
-            {
-                // Configure the database connection
-                return new SqliteConnection(configuration.GetConnectionString("DefaultConnection"));
-            });
-
-var kernel = kernelBuilder.Build();
-
-var agent = await DBMSAgentFactory.CreateAgentAsync(kernel, memory);
-
-var chatHistory = new ChatHistory(question, AuthorRole.User);
-
-// execute the NL2SQL query
-var responses = await agent.InvokeAsync(chatHistory)
-                           .ConfigureAwait(false);
-```
-
-## Quality insurance
 
 Using LLM agents to write and execute its own queries into a database might lead to risks such as unintended data exposure, security vulnerabilities, and inefficient query execution, potentially compromising system integrity and compliance requirements.
 To mitigate these risks, the Database Agent for Semantic Kernel provides a set of quality assurance features to ensure the safety and reliability of the queries executed by the agent.
@@ -99,6 +47,10 @@ public class CustomQueryExecutionFilter : IQueryExecutionFilter
     }
 }
 ```
+
+### Prerequisites
+
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ## Contributing
 

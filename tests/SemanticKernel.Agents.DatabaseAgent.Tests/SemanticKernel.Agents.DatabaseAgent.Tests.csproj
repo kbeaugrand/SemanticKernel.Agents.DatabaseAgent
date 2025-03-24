@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SemanticKernel.Agents.DatabaseAgent.QualityAssurance\SemanticKernel.Agents.DatabaseAgent.QualityAssurance.csproj" />
     <ProjectReference Include="..\..\src\SemanticKernel.Agents.DatabaseAgent\SemanticKernel.Agents.DatabaseAgent.csproj" />
   </ItemGroup>
 

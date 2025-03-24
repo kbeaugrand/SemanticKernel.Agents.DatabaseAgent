@@ -4,8 +4,10 @@ using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
+using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Common;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
@@ -38,7 +40,7 @@ public class DatabasePlugin
     [KernelFunction]
     [return: Description("A Markdown representation of the query result.")]
     public async Task<string> ExecuteQueryAsync(Kernel kernel,
-                                                [Description("The prompt in natural language.")]
+                                                [Description("The user query in natural language.")]
                                                 string prompt,
                                                 CancellationToken cancellationToken)
     {
@@ -50,13 +52,30 @@ public class DatabasePlugin
         var tableDefinitions = string.Join(Environment.NewLine, relatedTables.Results.Select(c => c.Partitions.First().Tags["definition"].First()));
 
         var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
-                                .ConfigureAwait(false);
+                        .ConfigureAwait(false);
+
+        var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
+
+        bool isQueryExecutionFiltered = true;
+
+        await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
+                                 _ =>
+                                {
+                                    isQueryExecutionFiltered = false;
+                                    return Task.CompletedTask;
+                                },
+                                queryExecutionContext)
+                            .ConfigureAwait(false);
+
+        if (isQueryExecutionFiltered)
+        {
+            return "Query execution was filtered.";
+        }
 
         using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
-                                    .ConfigureAwait(false);
+                                                 .ConfigureAwait(false);
 
         return MarkdownRenderer.Render(dataTable);
-
     }
 
     private async Task<string> GetSQLQueryStringAsync(Kernel kernel,
@@ -77,5 +96,22 @@ public class DatabasePlugin
                                                          .ConfigureAwait(false);
 
         return functionResult.GetValue<string>()!;
-    }    
+    }
+
+    private static async Task InvokeFiltersOrQueryAsync(
+        List<IQueryExecutionFilter>? functionFilters,
+        Func<QueryExecutionContext, Task> functionCallback,
+        QueryExecutionContext context,
+        int index = 0)
+    {
+        if (functionFilters is { Count: > 0 } && index < functionFilters.Count)
+        {
+            await functionFilters[index].OnQueryExecutionAsync(context,
+                (context) => InvokeFiltersOrQueryAsync(functionFilters, functionCallback, context, index + 1)).ConfigureAwait(false);
+        }
+        else
+        {
+            await functionCallback(context).ConfigureAwait(false);
+        }
+    }
 }

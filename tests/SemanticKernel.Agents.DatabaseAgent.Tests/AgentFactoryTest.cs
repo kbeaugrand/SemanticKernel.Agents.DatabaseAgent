@@ -11,6 +11,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using SQLitePCL;
 using System.Data.Common;
 
+
 namespace SemanticKernel.Agents.DatabaseAgent.Tests
 {
     public class AgentFactoryTest
@@ -61,6 +62,13 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             {
                 return new SqliteConnection(configuration.GetConnectionString("DefaultConnection"));
             });
+
+            kernelBuilder.Services
+                            .UseDatabaseAgentQualityAssurance(opts =>
+                            {
+                                opts.EnableQueryRelevancyFilter = true;
+                                opts.QueryRelevancyThreshold = .8f;
+                            });
         }
 
         [Test]

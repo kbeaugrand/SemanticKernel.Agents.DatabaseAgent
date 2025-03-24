@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticKernel.Agents.DatabaseAgent.Tests", "..\tests\SemanticKernel.Agents.DatabaseAgent.Tests\SemanticKernel.Agents.DatabaseAgent.Tests.csproj", "{830AF03C-A298-44E3-96C6-6E1A6EAE0C5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticKernel.Agents.DatabaseAgent.QualityAssurance", "SemanticKernel.Agents.DatabaseAgent.QualityAssurance\SemanticKernel.Agents.DatabaseAgent.QualityAssurance.csproj", "{ECA0008E-81A8-41CE-9896-08F22A5CCBAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{830AF03C-A298-44E3-96C6-6E1A6EAE0C5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{830AF03C-A298-44E3-96C6-6E1A6EAE0C5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{830AF03C-A298-44E3-96C6-6E1A6EAE0C5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECA0008E-81A8-41CE-9896-08F22A5CCBAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECA0008E-81A8-41CE-9896-08F22A5CCBAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECA0008E-81A8-41CE-9896-08F22A5CCBAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECA0008E-81A8-41CE-9896-08F22A5CCBAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
