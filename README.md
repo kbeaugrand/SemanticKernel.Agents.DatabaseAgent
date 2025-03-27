@@ -1,4 +1,4 @@
-﻿# DBMS Agent for Semantic Kernel
+﻿# Database Agent for Semantic Kernel
 
 [![Build & Test](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_tests.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/build_test.yml)
 [![Create Release](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml/badge.svg)](https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent/actions/workflows/publish.yml)
