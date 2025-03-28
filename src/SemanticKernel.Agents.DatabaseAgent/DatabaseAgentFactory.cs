@@ -78,16 +78,17 @@ public static class DatabaseAgentFactory
     {
         var stringBuilder = new StringBuilder();
 
-        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), cancellationToken)
-                                                 .ConfigureAwait(false);
+        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, memory, cancellationToken), cancellationToken)
+                                                                .ConfigureAwait(false);
 
-        await foreach (var (definition, description) in descriptions)
+        await foreach (var (tableName, definition, description) in descriptions)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
 
-            await memory.ImportDocumentAsync(new Document()
+            await memory.ImportDocumentAsync(new Document(tableName)
                             .AddStream("table.txt", stream)
-                            .AddTag("definition", definition), cancellationToken: cancellationToken)
+                            .AddTag("definition", definition),
+                            cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
             stringBuilder.AppendLine(description);
@@ -96,7 +97,7 @@ public static class DatabaseAgentFactory
         return stringBuilder.ToString();
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition)> GetTablesAsync(Kernel kernel, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition)> GetTablesAsync(Kernel kernel, IKernelMemory memory, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
@@ -118,6 +119,11 @@ public static class DatabaseAgentFactory
 
         foreach (DataRow row in reader!.Rows)
         {
+            if (!memory.IsDocumentReadyAsync(row[0].ToString()!,  cancellationToken: cancellationToken).Result)
+            {
+                continue;
+            }
+
             var tableDefinitionScript = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
                     { "prompt", $"What is the current CREATE statements for table '{row[0].ToString()}'" }
@@ -131,7 +137,7 @@ public static class DatabaseAgentFactory
         }
     }
 
-    private static async IAsyncEnumerable<(string tableDefinition, string tableDescription)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<(string tableName, string tableDefinition)> values, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<(string tableName, string tableDefinition)> values, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(_tableDescriptionPrompt, promptExecutionSettings);
 
@@ -147,7 +153,7 @@ public static class DatabaseAgentFactory
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (definition, $"{item.tableName}:\n{description.GetValue<string>()}")!;
+            yield return (item.tableName, definition, $"{item.tableName}:\n{description.GetValue<string>()}")!;
         }
     }
 }
