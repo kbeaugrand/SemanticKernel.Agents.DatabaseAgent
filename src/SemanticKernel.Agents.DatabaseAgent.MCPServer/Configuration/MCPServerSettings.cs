@@ -2,7 +2,7 @@
 
 internal class MCPServerSettings
 {
-    public string Provider { get; set; }
+    public required DatabaseSettings Database { get; set; }
 
-    public string ConnectionString { get; set; }
+    public required MemorySettings Memory { get; set; }
 }

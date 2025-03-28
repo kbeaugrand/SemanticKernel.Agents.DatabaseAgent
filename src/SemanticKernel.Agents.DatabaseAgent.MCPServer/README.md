@@ -21,11 +21,26 @@ To start the MCP server, you can run the following command:
 dotnet modelcontextprotocol-database-agent --Provider <provider> --ConnectionString <connection-string>
 ```
 
-
 The following options are available:
 
-- `--Provider`: The provider to use for the database connection. The supported providers are `sqlite`, `mysql`, and `sqlserver`.
+- `--Provider`: The provider to use for the database connection.
 - `--ConnectionString`: The connection string to use for the database connection.
+
+
+## Supported database providers
+
+The following database providers are supported:
+
+- `sqlite`: SQLite database provider
+- `sqlserver`: SQL Server database provider
+- `mysql`: MySQL database provider
+- `postgresql`: PostgreSQL database provider
+- `oracle`: Oracle database provider
+- `oledb`: OLE DB database provider`
+
+## Contributing
+
+Contributions are welcome! For more information, please see the [CONTRIBUTING](../../CONTRIBUTING.md) file.
 
 ## License
 
