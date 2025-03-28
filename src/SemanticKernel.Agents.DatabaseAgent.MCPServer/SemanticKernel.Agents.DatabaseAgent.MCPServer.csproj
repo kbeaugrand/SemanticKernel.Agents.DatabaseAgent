@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>modelcontextprotocol-database-agent</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <TargetFramework>net8.0</TargetFramework>
+
   </PropertyGroup>
 
   <ItemGroup>

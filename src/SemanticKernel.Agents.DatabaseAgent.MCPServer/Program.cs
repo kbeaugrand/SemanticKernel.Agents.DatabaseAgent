@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Microsoft.SemanticKernel;
-using ModelContextProtocol;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer;
 
@@ -16,9 +14,7 @@ internal class Program
 {
     static async Task Main(string[] args)
     {
-        var builder = Host.CreateEmptyApplicationBuilder(settings: null);
-
-        IConfiguration configuration = builder.Configuration
+        IConfiguration configuration = new ConfigurationBuilder()
                                                 .AddEnvironmentVariables()
                                                 .AddCommandLine(args)
                                                 .Build();
@@ -28,13 +24,11 @@ internal class Program
 
         var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel, memory);
 
-        builder.Services
-            .AddMcpServer()
-            .WithStdioServerTransport();
+        await using var mcpServer = agent.ToMcpServer();
 
-        await builder
-            .Build()
-            .RunAsync();
+        await mcpServer.StartAsync();
+
+        await Task.Delay(Timeout.Infinite);
     }
 
 
