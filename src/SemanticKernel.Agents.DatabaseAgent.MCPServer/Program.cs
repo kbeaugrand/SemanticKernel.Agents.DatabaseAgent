@@ -31,7 +31,6 @@ internal class Program
         await Task.Delay(Timeout.Infinite);
     }
 
-
     static IKernelMemory ConfigureMemory(IConfiguration configuration)
     {
         var memorySettings = configuration.GetSection("memory").Get<MemorySettings>()!;
@@ -50,7 +49,7 @@ internal class Program
                     StorageType = FileSystemTypes.Volatile
                 });
                 break;
-            case MemorySettings.StorageType.Disk:
+            case MemorySettings.StorageType.Persistent:
                 memoryBuilder.WithSimpleTextDb(new SimpleTextDbConfig()
                 {
                     StorageType = FileSystemTypes.Disk,
@@ -78,7 +77,10 @@ internal class Program
         var kernelBuilder = Kernel.CreateBuilder();
 
         kernelBuilder.Services
-                    .UseDatabaseAgentQualityAssurance();
+                    .UseDatabaseAgentQualityAssurance(opts =>
+                    {
+                        configuration.GetSection("agent:qualityAssurance").Bind(opts);
+                    });
 
         kernelBuilder.Services.AddScoped(sp => DbConnectionFactory.CreateDbConnection(databaseSettings.ConnectionString, databaseSettings.Provider));
 

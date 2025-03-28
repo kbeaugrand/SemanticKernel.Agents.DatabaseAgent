@@ -5,7 +5,7 @@ internal class MemorySettings
     public enum StorageType
     {
         Volatile,
-        Disk
+        Persistent
     }
 
     public required StorageType Kind { get; set; }

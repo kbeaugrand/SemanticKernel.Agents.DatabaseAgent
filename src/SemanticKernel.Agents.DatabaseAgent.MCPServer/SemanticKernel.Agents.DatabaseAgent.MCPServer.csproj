@@ -12,6 +12,18 @@
 
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- NuGet Package Settings -->
+    <Title>Semantic Kernel Database agent MCP server</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>
+      Microsoft's Semantic Kernel NL2SQL agent for databases.
+      This agent can be used to generate SQL queries from natural language prompts.
+      
+      This is the MCP server tool for .NET core CLI.
+    </Description>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageReference Include="Microsoft.KernelMemory.AI.AzureOpenAI" Version="0.98.250324.1" />
