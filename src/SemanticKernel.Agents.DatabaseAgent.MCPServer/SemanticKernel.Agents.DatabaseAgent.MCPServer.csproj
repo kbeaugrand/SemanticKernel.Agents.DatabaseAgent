@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>modelcontextprotocol-database-agent</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <TargetFramework>net8.0</TargetFramework>
+
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- NuGet Package Settings -->
+    <Title>Semantic Kernel Database agent MCP server</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>
+      Microsoft's Semantic Kernel NL2SQL agent for databases.
+      This agent can be used to generate SQL queries from natural language prompts.
+      
+      This is the MCP server tool for .NET core CLI.
+    </Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Microsoft.KernelMemory.AI.AzureOpenAI" Version="0.98.250324.1" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250324.1" />
+    <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.1.25171.12" />
+    <PackageReference Include="MySql.Data" Version="9.2.0" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.7.0" />
+    <PackageReference Include="System.Data.OleDb" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.14" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SemanticKernel.Agents.DatabaseAgent.QualityAssurance\SemanticKernel.Agents.DatabaseAgent.QualityAssurance.csproj" />
+    <ProjectReference Include="..\SemanticKernel.Agents.DatabaseAgent\SemanticKernel.Agents.DatabaseAgent.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="northwind.db">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
