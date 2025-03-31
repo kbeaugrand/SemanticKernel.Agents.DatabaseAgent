@@ -4,7 +4,9 @@ internal class MemorySettings
 {
     public enum StorageType
     {
-        Volatile,    }
+        Volatile,
+        SQLite
+    }
 
     public required StorageType Kind { get; set; }
 }
