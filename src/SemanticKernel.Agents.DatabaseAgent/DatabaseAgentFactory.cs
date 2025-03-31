@@ -3,6 +3,7 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.Data;
@@ -89,6 +90,8 @@ public static class DatabaseAgentFactory
 
         var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), cancellationToken)
                                                                 .ConfigureAwait(false);
+        
+        var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
         await foreach (var (tableName, definition, description) in descriptions)
         {
@@ -99,7 +102,9 @@ public static class DatabaseAgentFactory
                             {
                                 TableName = tableName,
                                 Definition = definition,
-                                Description = description
+                                Description = description,
+                                TextEmbedding = await embeddingTextGenerator.GenerateEmbeddingAsync(description, cancellationToken: cancellationToken)
+                                                                            .ConfigureAwait(false)
                             })
                             .ConfigureAwait(false);
 
@@ -175,7 +180,7 @@ public static class DatabaseAgentFactory
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (item, definition.GetValue<string>(), description.GetValue<string>())!;
+            yield return (item, tableDefinition, description.GetValue<string>())!;
         }
     }
 }
