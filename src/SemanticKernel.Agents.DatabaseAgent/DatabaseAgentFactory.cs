@@ -109,7 +109,7 @@ public static class DatabaseAgentFactory
         return stringBuilder.ToString();
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition)> GetTablesAsync(Kernel kernel, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<string> GetTablesAsync(Kernel kernel, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
@@ -131,48 +131,43 @@ public static class DatabaseAgentFactory
 
         foreach (DataRow row in reader!.Rows)
         {
-            var existingRecord = await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
-                                            .GetAsync(row[0].ToString()!)
-                                            .ConfigureAwait(false);
-
-            if (existingRecord is not null)
-            {
-                yield return (row[0].ToString()!, existingRecord.Definition);
-                continue;
-            }
-
-            var tableDefinitionScript = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
-                {
-                    { "prompt", $"What is the current CREATE statements for table '{row[0].ToString()}'" }
-                }, cancellationToken)
-                .ConfigureAwait(false);
-
-            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableDefinitionScript.GetValue<string>()!, null, cancellationToken)
-                                            .ConfigureAwait(false));
-
-            yield return (row[0].ToString()!, tableDefinition);
+            yield return row[0].ToString()!;
         }
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<(string tableName, string tableDefinition)> values, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var connection = kernel.GetRequiredService<DbConnection>();
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(_tableDescriptionPrompt, promptExecutionSettings);
+        var defaultKernelArguments = new KernelArguments
+            {
+                { "providerName", connection.GetProviderName() },
+                { "tablesDefinitions", "" }
+            };
 
         StringBuilder sb = new StringBuilder();
 
-        await foreach (var item in values)
+        await foreach (var item in tables)
         {
             var existingRecord = await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
-                                            .GetAsync(item.tableName)
+                                            .GetAsync(item)
                                             .ConfigureAwait(false);
 
             if (existingRecord is not null)
             {
-                yield return (item.tableName, existingRecord.Definition, existingRecord.Description);
+                yield return (item, existingRecord.Definition, existingRecord.Description);
                 continue;
             }
 
-            var definition = $"{item.tableName}:\n{item.tableDefinition}";
+            var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
+                {
+                    { "prompt", $"What is the current CREATE statements for table '{item}'" }
+                }, cancellationToken)
+                .ConfigureAwait(false);
+
+            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, definition.GetValue<string>()!, null, cancellationToken)
+                                            .ConfigureAwait(false)); ;
 
             var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
                                     {
@@ -180,7 +175,7 @@ public static class DatabaseAgentFactory
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (item.tableName, definition, description.GetValue<string>())!;
+            yield return (item, definition.GetValue<string>(), description.GetValue<string>())!;
         }
     }
 }
