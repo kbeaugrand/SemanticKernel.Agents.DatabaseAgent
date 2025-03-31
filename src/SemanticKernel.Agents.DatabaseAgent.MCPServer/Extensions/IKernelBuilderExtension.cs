@@ -15,9 +15,8 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                 case "AzureOpenAI":
                     var config = service.Get<AzureOpenAIConfig>();
                     return builder.AddAzureOpenAIChatCompletion(config.Deployment, config.Endpoint, config.APIKey);
-                    break;
                 default:
-                    throw new ArgumentException("Unknown service type");
+                    throw new ArgumentException($"Unknown service type: '{service["Type"]}' for {serviceName}");
             }
 
         }

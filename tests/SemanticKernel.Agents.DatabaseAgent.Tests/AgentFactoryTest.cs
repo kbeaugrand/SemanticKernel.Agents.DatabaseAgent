@@ -1,11 +1,9 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Embeddings;
-using OpenAI.Chat;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SQLitePCL;
 using System.Data.Common;
@@ -99,10 +97,8 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build());
             var embeddingTextGenerator = evaluatorKernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-            var chatHistory = new ChatHistory(question, AuthorRole.User);
-
             // Test
-            var responses = agent.InvokeAsync([new Microsoft.SemanticKernel.ChatMessageContent { Content = question, Role = AuthorRole.User }], thread: null)
+            var responses = agent.InvokeAsync([new ChatMessageContent { Content = question, Role = AuthorRole.User }], thread: null)
                                             .ConfigureAwait(false);
 
             // Assert
