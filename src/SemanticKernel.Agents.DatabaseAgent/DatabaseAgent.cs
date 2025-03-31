@@ -185,8 +185,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         string? additionalInstructions,
         CancellationToken cancellationToken)
     {
-        ChatHistory chat = [];
-
+        ChatHistory chat = new ChatHistory();
         string? instructions = await this.FormatInstructionsAsync(kernel, arguments, cancellationToken).ConfigureAwait(false);
 
         if (!string.IsNullOrWhiteSpace(instructions))
