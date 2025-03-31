@@ -8,7 +8,7 @@
 ## Overview
 
 The Database Agent for Semantic Kernel is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL). The Agent is responsible for managing the storage and retrieval of data from the Semantic Kernel. 
-This built on top of the [Microsoft's Semantic Kernel](https://github.com/microsoft/semantic-kernel) and leverages the [Microsoft's Kernel Memory](https://github.com/microsoft/kernel-memory) service to memorize database schema and relationships to provide a more efficient and accurate database management system.
+This built on top of the [Microsoft's Semantic Kernel](https://github.com/microsoft/semantic-kernel) and Semantic Kernel Memory connectors to memorize database schema and relationships to provide a more efficient and accurate database management system.
 
 ## Getting Started
 
