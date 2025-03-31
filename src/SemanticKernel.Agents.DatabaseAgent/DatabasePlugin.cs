@@ -10,6 +10,7 @@ using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Text;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
@@ -46,45 +47,58 @@ public class DatabasePlugin
                                                 string prompt,
                                                 CancellationToken cancellationToken)
     {
-        var connection = kernel.GetRequiredService<DbConnection>();
-        var textEmbeddingService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+        try
+        {
+            var connection = kernel.GetRequiredService<DbConnection>();
+            var textEmbeddingService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-        var embeddings = textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
-                                            .ConfigureAwait(false);
+            var embeddings = await textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
+                                                                        .ConfigureAwait(false);
 
-        var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, new VectorSearchOptions<TableDefinitionSnippet>
-                                                            {
-                                                                // TODO: Add a threshold for the search
-                                                            }, cancellationToken: cancellationToken)
-                                                    .ConfigureAwait(false);
+            var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
-        var tableDefinitions = string.Join(Environment.NewLine, relatedTables.Results.Select(c => c.Record.Definition));
+            var tableDefinitionsSb = new StringBuilder();
 
-        var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
-                        .ConfigureAwait(false);
+            await foreach(var relatedTable in relatedTables.Results)
+            {
+                tableDefinitionsSb.AppendLine(relatedTable.Record.Definition);
+            }
 
-        var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
+            var tableDefinitions = tableDefinitionsSb.ToString();
 
-        bool isQueryExecutionFiltered = true;
 
-        await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
-                                 _ =>
-                                {
-                                    isQueryExecutionFiltered = false;
-                                    return Task.CompletedTask;
-                                },
-                                queryExecutionContext)
+            var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
                             .ConfigureAwait(false);
 
-        if (isQueryExecutionFiltered)
-        {
-            return "Query execution was filtered.";
+            var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
+
+            bool isQueryExecutionFiltered = true;
+
+            await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
+                                     _ =>
+                                    {
+                                        isQueryExecutionFiltered = false;
+                                        return Task.CompletedTask;
+                                    },
+                                    queryExecutionContext)
+                                .ConfigureAwait(false);
+
+            if (isQueryExecutionFiltered)
+            {
+                return "Query execution was filtered.";
+            }
+
+            using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
+                                                     .ConfigureAwait(false);
+
+            return MarkdownRenderer.Render(dataTable);
         }
-
-        using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
-                                                 .ConfigureAwait(false);
-
-        return MarkdownRenderer.Render(dataTable);
+        catch (Exception e)
+        {
+            this._log.LogError(e, "Error executing query: {prompt}", prompt);
+            throw;
+        }
     }
 
     private async Task<string> GetSQLQueryStringAsync(Kernel kernel,

@@ -67,6 +67,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         {
             chatHistory.Add(existingMessage);
         }
+
         string agentName = this.GetDisplayName();
         var invokeResults = this.InternalInvokeAsync(
             agentName,
@@ -122,6 +123,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         {
             chatHistory.Add(existingMessage);
         }
+
         string agentName = this.GetDisplayName();
         var invokeResults = this.InternalInvokeStreamingAsync(
             agentName,
@@ -172,6 +174,10 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
                 kernel,
                 arguments?.ExecutionSettings,
                 arguments ?? []);
+
+        executionSettings ??= new PromptExecutionSettings();
+
+        executionSettings!.FunctionChoiceBehavior = FunctionChoiceBehavior.Auto();
 
         return (chatCompletionService, executionSettings);
     }

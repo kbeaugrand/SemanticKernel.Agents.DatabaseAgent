@@ -114,7 +114,9 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
                 var score = TensorPrimitives.CosineSimilarity(embeddings[0].Span, embeddings[1].Span);
 
-                Assert.That(score, Is.GreaterThan(0.75));
+                Console.WriteLine($"Score: {score}");
+                Console.WriteLine($"Answer: {response.Message}");
+                Assert.That(score, Is.GreaterThan(0.8));
             }
         }
     }
