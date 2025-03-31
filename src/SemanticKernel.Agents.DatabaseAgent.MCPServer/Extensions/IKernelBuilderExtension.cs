@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
+using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {

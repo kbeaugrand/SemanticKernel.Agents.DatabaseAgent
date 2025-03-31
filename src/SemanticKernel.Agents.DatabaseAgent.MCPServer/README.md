@@ -42,24 +42,9 @@ The following options are available:
     - **Example**: `--database:Provider=sqlite`  
 
 . `--memory:Kind`  
-    - **Description**: Defines the kind of memory to be used for the kernel (e.g., Volatile, Persistent).  
+    - **Description**: Defines the kind of memory to be used for the kernel (e.g., Volatile).  
     - **Type**: `string`  
     - **Example**: `--memory:Kind=Volatile`  
-   
-. `--memory:Path`  
-    - **Description**: Specifies the path to the memory files.
-    - **Type**: `string`  
-    - **Example**: `--memory:Path=xxx`  
-
-. `--memory:Completion`  
-    - **Description**: Specifies the model used for the completion task.  
-    - **Type**: `string`  
-    - **Example**: `--memory:Completion=gpt-4o-mini`  
-
-. `--memory:Embedding`  
-    - **Description**: Specifies the embedding model used for text embeddings.  
-    - **Type**: `string`  
-    - **Example**: `--memory:Embedding=text-embedding-ada-002`  
 
 . `--kernel:Completion`  
     - **Description**: Defines the completion model used by the kernel.  

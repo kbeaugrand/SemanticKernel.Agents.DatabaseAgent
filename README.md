@@ -33,10 +33,6 @@ using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
 using SemanticKernel.Agents.DatabaseAgent;
 
-var memory = new KernelMemoryBuilder()
-               ... 
-                .Build();
-
 var kernelBuilder = Kernel.CreateBuilder()
                 ...
                 .Build();
@@ -49,7 +45,7 @@ kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
 
 var kernel = kernelBuilder.Build();
 
-var agent = await DBMSAgentFactory.CreateAgentAsync(kernel, memory);
+var agent = await DBMSAgentFactory.CreateAgentAsync(kernel);
 
 var chatHistory = new ChatHistory(question, AuthorRole.User);
 

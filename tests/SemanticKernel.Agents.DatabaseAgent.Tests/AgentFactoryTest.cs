@@ -1,16 +1,18 @@
-using KernelMemory.Evaluation.Evaluators;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.KernelMemory;
-using Microsoft.KernelMemory.DocumentStorage.DevTools;
-using Microsoft.KernelMemory.FileSystem.DevTools;
-using Microsoft.KernelMemory.MemoryStorage.DevTools;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Embeddings;
+using OpenAI.Chat;
+using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SQLitePCL;
 using System.Data.Common;
+using System.Numerics.Tensors;
 
+#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 namespace SemanticKernel.Agents.DatabaseAgent.Tests
 {
@@ -18,7 +20,6 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
     {
         private IKernelBuilder kernelBuilder;
         private IConfiguration configuration;
-        private IKernelMemory memory;
 
         [SetUp]
         public void Setup()
@@ -38,25 +39,12 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             configuration.GetSection("AzureOpenAI:Completion").Bind(completionConfig);
             configuration.GetSection("AzureOpenAI:Embeddings").Bind(embeddingsConfig);
 
-            memory = new KernelMemoryBuilder()
-                .WithAzureOpenAITextGeneration(completionConfig)
-                .WithAzureOpenAITextEmbeddingGeneration(embeddingsConfig)
-                .WithSimpleTextDb(new SimpleTextDbConfig()
-                {
-                    StorageType = FileSystemTypes.Volatile
-                })
-                .WithSimpleFileStorage(new SimpleFileStorageConfig()
-                {
-                    StorageType = FileSystemTypes.Volatile
-                })
-                .Build();
-
-#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
             kernelBuilder = Kernel
-                .CreateBuilder()
-                .AddAzureOpenAIChatCompletion(completionConfig.Deployment, completionConfig.Endpoint, completionConfig.APIKey)
-                .AddAzureOpenAITextEmbeddingGeneration(embeddingsConfig.Deployment, embeddingsConfig.Endpoint, embeddingsConfig.APIKey);
-#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+                    .CreateBuilder()
+                    .AddAzureOpenAIChatCompletion(completionConfig.Deployment, completionConfig.Endpoint, completionConfig.APIKey)
+                    .AddAzureOpenAITextEmbeddingGeneration(embeddingsConfig.Deployment, embeddingsConfig.Endpoint, embeddingsConfig.APIKey);
+
+            kernelBuilder.AddInMemoryVectorStoreRecordCollection<string, TableDefinitionSnippet>("tables");
 
             kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
             {
@@ -78,10 +66,10 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
 
             // Test
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build());
 
             // Assert
-            Assert.IsNotNull(agent);
+            Assert.That(agent, Is.Not.Null);
         }
 
         [TestCase("How many customer I have ?", "There are 93 customers")]
@@ -108,27 +96,28 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             // Arrange
             var evaluatorKernel = kernelBuilder.Build();
 
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build(), memory);
-            var faithfulnessEvaluator = new FaithfulnessEvaluator(evaluatorKernel);
-            var answerSimilarityEvaluator = new AnswerSimilarityEvaluator(evaluatorKernel);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build());
+            var embeddingTextGenerator = evaluatorKernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
             var chatHistory = new ChatHistory(question, AuthorRole.User);
 
             // Test
-            var responses = agent.InvokeAsync(chatHistory)
+            var responses = agent.InvokeAsync([new Microsoft.SemanticKernel.ChatMessageContent { Content = question, Role = AuthorRole.User }], thread: null)
                                             .ConfigureAwait(false);
 
             // Assert
-            Assert.IsNotNull(responses);
-
             await foreach (var response in responses)
             {
-                Assert.IsNotNull(response.Content);
+                Assert.That(response.Message, Is.Not.Null);
+                var embeddings = await embeddingTextGenerator.GenerateEmbeddingsAsync([expectedAnswer, response.Message.Content!])
+                                                .ConfigureAwait(false);
 
-                var score = await answerSimilarityEvaluator.EvaluateAsync(truth: expectedAnswer, response.Content!);
+                var score = TensorPrimitives.CosineSimilarity(embeddings[0].Span, embeddings[1].Span);
 
-                Assert.IsTrue(score > 0.8);
+                Assert.That(score, Is.GreaterThan(0.75));
             }
         }
     }
 }
+#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.

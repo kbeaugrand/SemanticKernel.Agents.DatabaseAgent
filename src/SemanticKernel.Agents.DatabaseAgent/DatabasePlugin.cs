@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.KernelMemory;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
@@ -17,14 +18,15 @@ public class DatabasePlugin
     private readonly ILogger<DatabasePlugin> _log;
     private readonly KernelFunction _writeSQLFunction;
 
-    private readonly IKernelMemory _kernelMemory;
     private readonly ILoggerFactory? _loggerFactory;
 
-    public DatabasePlugin(IKernelMemory kernelMemory, ILoggerFactory? loggerFactory = null)
+    private readonly IVectorStoreRecordCollection<string, TableDefinitionSnippet> _vectorStore;
+
+    public DatabasePlugin(IVectorStoreRecordCollection<string, TableDefinitionSnippet> vectorStore, ILoggerFactory? loggerFactory = null)
     {
         this._loggerFactory = loggerFactory;
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
-        this._kernelMemory = kernelMemory;
+        this._vectorStore = vectorStore;
 
         this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
         {
@@ -45,11 +47,18 @@ public class DatabasePlugin
                                                 CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
+        var textEmbeddingService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-        var relatedTables = await _kernelMemory.SearchAsync(prompt, minRelevance: 1, cancellationToken: cancellationToken)
+        var embeddings = textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
                                             .ConfigureAwait(false);
 
-        var tableDefinitions = string.Join(Environment.NewLine, relatedTables.Results.Select(c => c.Partitions.First().Tags["definition"].First()));
+        var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, new VectorSearchOptions<TableDefinitionSnippet>
+                                                            {
+                                                                // TODO: Add a threshold for the search
+                                                            }, cancellationToken: cancellationToken)
+                                                    .ConfigureAwait(false);
+
+        var tableDefinitions = string.Join(Environment.NewLine, relatedTables.Results.Select(c => c.Record.Definition));
 
         var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
                         .ConfigureAwait(false);
