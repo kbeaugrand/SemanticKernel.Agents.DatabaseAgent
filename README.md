@@ -31,6 +31,7 @@ To use the Database Agent for Semantic Kernel, you must first create an instance
 ```csharp
 using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion
 using SemanticKernel.Agents.DatabaseAgent;
 
 var kernelBuilder = Kernel.CreateBuilder()
@@ -47,11 +48,9 @@ var kernel = kernelBuilder.Build();
 
 var agent = await DBMSAgentFactory.CreateAgentAsync(kernel);
 
-var chatHistory = new ChatHistory(question, AuthorRole.User);
-
 // execute the NL2SQL query
-var responses = await agent.InvokeAsync(chatHistory)
-                           .ConfigureAwait(false);
+var responses = agent.InvokeAsync([new ChatMessageContent { Content = question, Role = AuthorRole.User }], thread: null)
+                                            .ConfigureAwait(false);
 ```
 
 ## Quality insurance
