@@ -131,9 +131,13 @@ public static class DatabaseAgentFactory
 
         foreach (DataRow row in reader!.Rows)
         {
-            if ((await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
-                        .GetAsync(row[0].ToString()!).ConfigureAwait(false)) is not null)
+            var existingRecord = await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
+                                            .GetAsync(row[0].ToString()!)
+                                            .ConfigureAwait(false);
+
+            if (existingRecord is not null)
             {
+                yield return (row[0].ToString()!, existingRecord.Definition);
                 continue;
             }
 
@@ -158,6 +162,16 @@ public static class DatabaseAgentFactory
 
         await foreach (var item in values)
         {
+            var existingRecord = await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
+                                            .GetAsync(item.tableName)
+                                            .ConfigureAwait(false);
+
+            if (existingRecord is not null)
+            {
+                yield return (item.tableName, existingRecord.Definition, existingRecord.Description);
+                continue;
+            }
+
             var definition = $"{item.tableName}:\n{item.tableDefinition}";
 
             var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
