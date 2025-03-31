@@ -21,9 +21,9 @@ public class DatabasePlugin
 
     private readonly ILoggerFactory? _loggerFactory;
 
-    private readonly IVectorStoreRecordCollection<string, TableDefinitionSnippet> _vectorStore;
+    private readonly IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> _vectorStore;
 
-    public DatabasePlugin(IVectorStoreRecordCollection<string, TableDefinitionSnippet> vectorStore, ILoggerFactory? loggerFactory = null)
+    public DatabasePlugin(IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore, ILoggerFactory? loggerFactory = null)
     {
         this._loggerFactory = loggerFactory;
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();

@@ -5,7 +5,8 @@ internal class MemorySettings
     public enum StorageType
     {
         Volatile,
-        SQLite
+        SQLite,
+        Qdrant,
     }
 
     public required StorageType Kind { get; set; }

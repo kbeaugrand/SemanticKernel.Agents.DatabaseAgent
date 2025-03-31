@@ -4,8 +4,11 @@ namespace SemanticKernel.Agents.DatabaseAgent
 {
     public sealed class TableDefinitionSnippet
     {
-        [VectorStoreRecordKey]
+        [VectorStoreRecordData]
         public required string TableName { get; set; }
+
+        [VectorStoreRecordKey]
+        public required Guid Key { get; set; }
 
         [VectorStoreRecordData]
         public string? Definition { get; set; }
