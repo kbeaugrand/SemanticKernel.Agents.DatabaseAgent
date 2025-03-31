@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using Org.BouncyCastle.Tls.Crypto.Impl.BC;
+using Microsoft.SemanticKernel.Connectors.Sqlite;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
 
@@ -31,7 +32,7 @@ internal class Program
     {
         var kernelSettings = configuration.GetSection("kernel").Get<KernelSettings>()!;
         var databaseSettings = configuration.GetSection("database").Get<DatabaseSettings>()!;
-        var memorySettings = configuration.GetSection("memory").Get<MemorySettings>()!;        
+        var memorySettings = configuration.GetSection("memory");        
 
         var kernelBuilder = Kernel.CreateBuilder();
 
@@ -43,10 +44,16 @@ internal class Program
 
         kernelBuilder.Services.AddScoped(sp => DbConnectionFactory.CreateDbConnection(databaseSettings.ConnectionString, databaseSettings.Provider));
 
-        switch (memorySettings.Kind)
+        switch (memorySettings.Get<MemorySettings>()!.Kind)
         {
             case MemorySettings.StorageType.Volatile:
                 kernelBuilder.AddInMemoryVectorStoreRecordCollection<string, TableDefinitionSnippet>("tables");
+                break;
+            case MemorySettings.StorageType.SQLite:
+                var sqliteSettings = new SQLiteMemorySettings();
+                memorySettings.Bind(sqliteSettings);
+                kernelBuilder.Services.AddScoped(sp => new SqliteConnection(sqliteSettings.ConnectionString));
+                kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<string, TableDefinitionSnippet>("tables");
                 break;
             default: throw new ArgumentException("Unknown storage type");
 
