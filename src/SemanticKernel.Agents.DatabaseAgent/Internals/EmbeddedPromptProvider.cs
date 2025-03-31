@@ -1,5 +1,4 @@
-﻿using Microsoft.KernelMemory.Prompts;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace SemanticKernel.Agents.DatabaseAgent.Internals;
 

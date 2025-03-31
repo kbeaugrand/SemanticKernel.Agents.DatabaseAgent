@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.KernelMemory;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -29,16 +29,25 @@ public static class DatabaseAgentFactory
 
     public static async Task<DatabaseKernelAgent> CreateAgentAsync(
             Kernel kernel,
-            IKernelMemory memory,
             CancellationToken? cancellationToken = null)
     {
-        var tableDescriptions = await MemorizeAgentSchema(kernel, memory, cancellationToken ?? CancellationToken.None);
+        var vectorStore = kernel.Services.GetService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>();
 
-        return await BuildAgentAsync(kernel, tableDescriptions, memory, cancellationToken ?? CancellationToken.None)
+        if (vectorStore is null)
+        {
+            throw new InvalidOperationException("The kernel does not have a vector store.");
+        }
+
+        await vectorStore.CreateCollectionIfNotExistsAsync()
+                            .ConfigureAwait(false);
+
+        var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken ?? CancellationToken.None);
+
+        return await BuildAgentAsync(kernel, tableDescriptions, cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
 
-    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, string tableDescriptions, IKernelMemory memory, CancellationToken cancellationToken)
+    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, string tableDescriptions, CancellationToken cancellationToken)
     {
         var agentDescription = await KernelFunctionFactory.CreateFromPrompt(_agentDescriptionPrompt, promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
@@ -63,9 +72,9 @@ public static class DatabaseAgentFactory
 
         var agentKernel = kernel.Clone();
 
-        agentKernel.ImportPluginFromObject(new DatabasePlugin(memory, NullLoggerFactory.Instance));
+        agentKernel.ImportPluginFromType<DatabasePlugin>();
 
-        return new DatabaseKernelAgent
+        return new DatabaseKernelAgent()
         {
             Kernel = agentKernel,
             Name = agentName.GetValue<string>(),
@@ -74,22 +83,25 @@ public static class DatabaseAgentFactory
         };
     }
 
-    private static async Task<string> MemorizeAgentSchema(Kernel kernel, IKernelMemory memory, CancellationToken cancellationToken)
+    private static async Task<string> MemorizeAgentSchema(Kernel kernel, CancellationToken cancellationToken)
     {
         var stringBuilder = new StringBuilder();
 
-        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, memory, cancellationToken), cancellationToken)
+        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), cancellationToken)
                                                                 .ConfigureAwait(false);
 
         await foreach (var (tableName, definition, description) in descriptions)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
 
-            await memory.ImportDocumentAsync(new Document(tableName)
-                            .AddStream("table.txt", stream)
-                            .AddTag("definition", definition),
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
+            await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
+                            .UpsertAsync(new TableDefinitionSnippet
+                            {
+                                TableName = tableName,
+                                Definition = definition,
+                                Description = description
+                            })
+                            .ConfigureAwait(false);
 
             stringBuilder.AppendLine(description);
         }
@@ -97,7 +109,7 @@ public static class DatabaseAgentFactory
         return stringBuilder.ToString();
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition)> GetTablesAsync(Kernel kernel, IKernelMemory memory, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition)> GetTablesAsync(Kernel kernel, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
@@ -119,7 +131,8 @@ public static class DatabaseAgentFactory
 
         foreach (DataRow row in reader!.Rows)
         {
-            if (!memory.IsDocumentReadyAsync(row[0].ToString()!,  cancellationToken: cancellationToken).Result)
+            if ((await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
+                        .GetAsync(row[0].ToString()!).ConfigureAwait(false)) is not null)
             {
                 continue;
             }
@@ -153,7 +166,7 @@ public static class DatabaseAgentFactory
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (item.tableName, definition, $"{item.tableName}:\n{description.GetValue<string>()}")!;
+            yield return (item.tableName, definition, description.GetValue<string>())!;
         }
     }
 }
