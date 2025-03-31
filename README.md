@@ -31,7 +31,7 @@ To use the Database Agent for Semantic Kernel, you must first create an instance
 ```csharp
 using Microsoft.KernelMemory;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion
+using Microsoft.SemanticKernel.ChatCompletion;
 using SemanticKernel.Agents.DatabaseAgent;
 
 var kernelBuilder = Kernel.CreateBuilder()
