@@ -42,7 +42,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .AddAzureOpenAIChatCompletion(completionConfig.Deployment, completionConfig.Endpoint, completionConfig.APIKey)
                     .AddAzureOpenAITextEmbeddingGeneration(embeddingsConfig.Deployment, embeddingsConfig.Endpoint, embeddingsConfig.APIKey);
 
-            kernelBuilder.AddInMemoryVectorStoreRecordCollection<string, TableDefinitionSnippet>("tables");
+            kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables");
 
             kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
             {

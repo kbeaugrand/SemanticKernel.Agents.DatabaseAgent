@@ -32,7 +32,7 @@ public static class DatabaseAgentFactory
             Kernel kernel,
             CancellationToken? cancellationToken = null)
     {
-        var vectorStore = kernel.Services.GetService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>();
+        var vectorStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>();
 
         if (vectorStore is null)
         {
@@ -97,9 +97,10 @@ public static class DatabaseAgentFactory
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
 
-            await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
+            await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
                             .UpsertAsync(new TableDefinitionSnippet
                             {
+                                Key = Guid.NewGuid(),
                                 TableName = tableName,
                                 Definition = definition,
                                 Description = description,
@@ -155,13 +156,18 @@ public static class DatabaseAgentFactory
 
         await foreach (var item in tables)
         {
-            var existingRecord = await kernel.GetRequiredService<IVectorStoreRecordCollection<string, TableDefinitionSnippet>>()
-                                            .GetAsync(item)
-                                            .ConfigureAwait(false);
+            var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
+                                                    .VectorizedSearchAsync((await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
+                                                        .GenerateEmbeddingAsync(item)
+                                                        .ConfigureAwait(false)))
+                                                    .ConfigureAwait(false);
+
+            var existingRecord = await existingRecordSearch.Results.FirstOrDefaultAsync(c => c.Record.TableName == item)
+                                                .ConfigureAwait(false);
 
             if (existingRecord is not null)
             {
-                yield return (item, existingRecord.Definition, existingRecord.Description);
+                yield return (item, existingRecord.Record.Definition!, existingRecord.Record.Description!);
                 continue;
             }
 

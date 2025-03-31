@@ -32,6 +32,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.3" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.44.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.44.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.44.0-preview" />
     <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.1.25171.12" />
     <PackageReference Include="MySql.Data" Version="9.2.0" />
