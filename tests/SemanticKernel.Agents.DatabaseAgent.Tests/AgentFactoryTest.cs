@@ -1,12 +1,9 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Embeddings;
-using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
+using SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
 using SQLitePCL;
-using System.Data.Common;
 using System.Numerics.Tensors;
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
@@ -16,7 +13,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 {
     public class AgentFactoryTest
     {
-        private IKernelBuilder kernelBuilder;
+        private Kernel kernel;
         private IConfiguration configuration;
 
         [SetUp]
@@ -31,30 +28,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .AddEnvironmentVariables()
                     .Build();
 
-            var completionConfig = new AzureOpenAIConfig();
-            var embeddingsConfig = new AzureOpenAIConfig();
-
-            configuration.GetSection("AzureOpenAI:Completion").Bind(completionConfig);
-            configuration.GetSection("AzureOpenAI:Embeddings").Bind(embeddingsConfig);
-
-            kernelBuilder = Kernel
-                    .CreateBuilder()
-                    .AddAzureOpenAIChatCompletion(completionConfig.Deployment, completionConfig.Endpoint, completionConfig.APIKey)
-                    .AddAzureOpenAITextEmbeddingGeneration(embeddingsConfig.Deployment, embeddingsConfig.Endpoint, embeddingsConfig.APIKey);
-
-            kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables");
-
-            kernelBuilder.Services.AddSingleton<DbConnection>((sp) =>
-            {
-                return new SqliteConnection(configuration.GetConnectionString("DefaultConnection"));
-            });
-
-            kernelBuilder.Services
-                            .UseDatabaseAgentQualityAssurance(opts =>
-                            {
-                                opts.EnableQueryRelevancyFilter = true;
-                                opts.QueryRelevancyThreshold = .8f;
-                            });
+            this.kernel = AgentKernelFactory.ConfigureKernel(configuration);
         }
 
         [Test]
@@ -64,7 +38,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
 
             // Test
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build());
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
 
             // Assert
             Assert.That(agent, Is.Not.Null);
@@ -92,9 +66,9 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
         public async Task AgentCanAnswerToDataAsync(string question, string expectedAnswer)
         {
             // Arrange
-            var evaluatorKernel = kernelBuilder.Build();
+            var evaluatorKernel = kernel.Clone();
 
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernelBuilder.Build());
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
             var embeddingTextGenerator = evaluatorKernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
             // Test
