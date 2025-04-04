@@ -3,5 +3,7 @@
     internal class SQLiteMemorySettings
     {
         public string ConnectionString { get; set; }
+
+        public int Dimensions { get; set; } = 1536;
     }
 }

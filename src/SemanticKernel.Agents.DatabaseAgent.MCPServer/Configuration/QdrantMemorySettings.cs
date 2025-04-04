@@ -9,5 +9,7 @@
         public bool Https { get; set; } = false;
 
         public string? APIKey { get; set; } = null;
+
+        public int Dimensions { get; set; } = 1536;
     }
 }

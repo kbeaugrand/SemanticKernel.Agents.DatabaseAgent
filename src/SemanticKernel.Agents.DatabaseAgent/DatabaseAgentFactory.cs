@@ -40,7 +40,7 @@ public static class DatabaseAgentFactory
         }
 
         await vectorStore.CreateCollectionIfNotExistsAsync()
-                            .ConfigureAwait(false);
+                         .ConfigureAwait(false);
 
         var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken ?? CancellationToken.None);
 

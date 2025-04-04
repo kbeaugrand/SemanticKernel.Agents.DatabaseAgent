@@ -56,11 +56,11 @@ public class DatabasePlugin
                                                                         .ConfigureAwait(false);
 
             var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+                   .ConfigureAwait(false);
 
             var tableDefinitionsSb = new StringBuilder();
 
-            await foreach(var relatedTable in relatedTables.Results)
+            await foreach (var relatedTable in relatedTables.Results)
             {
                 tableDefinitionsSb.AppendLine(relatedTable.Record.Definition);
             }
