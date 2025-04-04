@@ -1,4 +1,4 @@
-﻿# Database Agent MCP Server
+# Database Agent MCP Server
 
 The Database Agent MCP Server is a server that listens for incoming connections from the Database Agent and processes the messages sent by the Database Agent. The Database Agent MCP Server is responsible for processing the messages sent by the Database Agent and executing the appropriate actions based on the message type.
 
