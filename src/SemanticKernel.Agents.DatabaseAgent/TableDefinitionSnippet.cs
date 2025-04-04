@@ -16,7 +16,7 @@ namespace SemanticKernel.Agents.DatabaseAgent
         [VectorStoreRecordData]
         public string? Description { get; set; }
 
-        [VectorStoreRecordVector(1536)]
+        [VectorStoreRecordVector]
         public ReadOnlyMemory<float> TextEmbedding { get; set; }
     }
 }
