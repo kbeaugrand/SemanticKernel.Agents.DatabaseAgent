@@ -1,4 +1,4 @@
-﻿# Database Agent MCP Server
+# Database Agent MCP Server
 
 The Database Agent MCP Server is a server that listens for incoming connections from the Database Agent and processes the messages sent by the Database Agent. The Database Agent MCP Server is responsible for processing the messages sent by the Database Agent and executing the appropriate actions based on the message type.
 
@@ -60,6 +60,18 @@ The following options are available
     - **Type**: `string`  
     - **Example**: `--database:ConnectionString="Data Source=northwind.db;Mode=ReadWrite"`  
 
+#### Supported database providers
+
+The following database providers are supported:
+
+- `sqlite`: SQLite database provider
+- `sqlserver`: SQL Server database provider
+- `mysql`: MySQL database provider
+- `postgresql`: PostgreSQL database provider
+- `oracle`: Oracle database provider
+- `oledb`: OLE DB database provider
+
+
 #### Memory options
 
 Memory options are used to configure the memory settings for the kernel. 
@@ -89,16 +101,19 @@ You can also set the memory to persist the data in a database. At the moment, th
 `--memory:Host`
     - **Description**: The host name or IP address of the Qdrant server.  
     - **Type**: `string`  
-    - **Example**: `--memory:Host="localhost"`  
+    - **Example**: `--memory:Host="localhost"` 
+
 `--memory:Port`  
     - **Description**: The port number of the Qdrant server.  
     - **Type**: `int`  
-    - **Example**: `--memory:Port=6333`  
+    - **Example**: `--memory:Port=6333` 
+
 `--memory:Https`
     - **Description**: Specifies whether to use HTTPS for the connection.  
     - **Type**: `bool`  
     - **Default**: `false`  
-    - **Example**: `--memory:Https=true`  
+    - **Example**: `--memory:Https=true` 
+
 `--memory:ApiKey`  
     - **Description**: The API key for authenticating with the Qdrant server.  
     - **Type**: `string`  
@@ -130,15 +145,18 @@ The services options are used to configure the services that are used by the ker
 `--services:<model>:Endpoint`  
     - **Description**: The endpoint URL for the service.  
     - **Type**: `string`  
-    - **Example**: `--services:gpt-4o-mini:Endpoint="https://xxx.openai.azure.com/"`  
+    - **Example**: `--services:gpt-4o-mini:Endpoint="https://xxx.openai.azure.com/"` 
+
 `--services:<model>:Auth`  
     - **Description**: The authentication method for the service (e.g., APIKey).  
     - **Type**: `string`  
     - **Example**: `--services:gpt-4o-mini:Auth=APIKey`  
+
 `--services:<model>:APIKey`  
     - **Description**: The API key for authenticating with the service.  
     - **Type**: `string`  
     - **Example**: `--services:gpt-4o-mini:APIKey="xxx"`  
+
 `--services:<model>:Deployment`  
     - **Description**: The deployment name for the service.  
     - **Type**: `string`  
@@ -150,6 +168,7 @@ The services options are used to configure the services that are used by the ker
     - **Description**: The model name for the Ollama service.  
     - **Type**: `string`  
     - **Example**: `--services:qwen2.5-coder:ModelId="qwen2.5-coder:latest"`  
+
 `--services:<model>:Host`  
     - **Description**: The host name or IP address of the Ollama server.  
     - **Type**: `string`  
@@ -171,16 +190,6 @@ You can set the quality assurance settings by adding these specific configuratio
     - **Default**: `true`  
     - **Example**: `--agent:QualityAssurance:QueryRelevancyThreshold=0.9`  
 
-## Supported database providers
-
-The following database providers are supported:
-
-- `sqlite`: SQLite database provider
-- `sqlserver`: SQL Server database provider
-- `mysql`: MySQL database provider
-- `postgresql`: PostgreSQL database provider
-- `oracle`: Oracle database provider
-- `oledb`: OLE DB database provider`
 
 ## Contributing
 
