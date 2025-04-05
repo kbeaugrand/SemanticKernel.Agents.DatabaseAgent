@@ -30,7 +30,7 @@ internal static class AgentKernelFactory
         };
     }
 
-    internal static Kernel ConfigureKernel(IConfiguration configuration)
+    internal static Kernel ConfigureKernel(IConfiguration configuration, Action<ILoggingBuilder> logging)
     {
         var kernelSettings = configuration.GetSection("kernel").Get<KernelSettings>()!;
         var databaseSettings = configuration.GetSection("database").Get<DatabaseSettings>()!;
@@ -38,11 +38,11 @@ internal static class AgentKernelFactory
 
         var kernelBuilder = Kernel.CreateBuilder();
 
-        kernelBuilder.Services.AddLogging(logging =>
-        {
-            logging.AddConsole();
-            logging.AddConfiguration(configuration.GetSection("logging"));
-        });
+        kernelBuilder.Services
+            .AddLogging(opts =>
+            {
+                logging(opts);
+            });
 
         kernelBuilder.Services
                     .UseDatabaseAgentQualityAssurance(opts =>
