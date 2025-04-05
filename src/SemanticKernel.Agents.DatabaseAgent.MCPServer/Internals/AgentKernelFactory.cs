@@ -30,6 +30,24 @@ internal static class AgentKernelFactory
         };
     }
 
+    private static VectorStoreRecordDefinition GetAgentStoreRecordDefinition(int vectorDimensions = 1536)
+    {
+        return new()
+        {
+            Properties = new List<VectorStoreRecordProperty>
+            {
+                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.AgentName), typeof(string)),
+                new VectorStoreRecordKeyProperty(nameof(AgentDefinitionSnippet.Key), typeof(Guid)),
+                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.Description), typeof(string)),
+                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.Instructions), typeof(string)),
+                new VectorStoreRecordVectorProperty(nameof(AgentDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>))
+                {
+                    Dimensions = vectorDimensions
+                }
+            }
+        };
+    }
+
     internal static Kernel ConfigureKernel(IConfiguration configuration, Action<ILoggingBuilder> logging)
     {
         var kernelSettings = configuration.GetSection("kernel").Get<KernelSettings>()!;
@@ -55,10 +73,17 @@ internal static class AgentKernelFactory
         switch (memorySettings.Get<MemorySettings>()!.Kind)
         {
             case MemorySettings.StorageType.Volatile:
+                kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent");
                 kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables");
                 break;
             case MemorySettings.StorageType.SQLite:
                 var sqliteSettings = memorySettings.Get<SQLiteMemorySettings>()!;
+                kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent", 
+                    sqliteSettings.ConnectionString,
+                    options: new SqliteVectorStoreRecordCollectionOptions<AgentDefinitionSnippet>()
+                    {
+                        VectorStoreRecordDefinition = GetAgentStoreRecordDefinition(sqliteSettings.Dimensions)
+                    });
                 kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables",
                     sqliteSettings.ConnectionString,
                     options: new SqliteVectorStoreRecordCollectionOptions<TableDefinitionSnippet>()
@@ -68,6 +93,15 @@ internal static class AgentKernelFactory
                 break;
             case MemorySettings.StorageType.Qdrant:
                 var qdrantSettings = memorySettings.Get<QdrantMemorySettings>()!;
+                kernelBuilder.AddQdrantVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent",
+                            qdrantSettings.Host,
+                            qdrantSettings.Port,
+                            qdrantSettings.Https,
+                            qdrantSettings.APIKey,
+                            new QdrantVectorStoreRecordCollectionOptions<AgentDefinitionSnippet>
+                            {
+                                VectorStoreRecordDefinition = GetAgentStoreRecordDefinition(qdrantSettings.Dimensions)
+                            });
                 kernelBuilder.AddQdrantVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
