@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
@@ -36,6 +37,12 @@ internal static class AgentKernelFactory
         var memorySettings = configuration.GetSection("memory");
 
         var kernelBuilder = Kernel.CreateBuilder();
+
+        kernelBuilder.Services.AddLogging(logging =>
+        {
+            logging.AddConsole();
+            logging.AddConfiguration(configuration.GetSection("logging"));
+        });
 
         kernelBuilder.Services
                     .UseDatabaseAgentQualityAssurance(opts =>
