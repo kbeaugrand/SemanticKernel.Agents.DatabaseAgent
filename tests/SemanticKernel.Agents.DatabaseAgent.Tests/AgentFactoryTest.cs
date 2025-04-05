@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Embeddings;
@@ -28,7 +29,10 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .AddEnvironmentVariables()
                     .Build();
 
-            this.kernel = AgentKernelFactory.ConfigureKernel(configuration);
+            this.kernel = AgentKernelFactory.ConfigureKernel(configuration, logging =>
+            {
+                logging.AddConsole();
+            });
         }
 
         [Test]

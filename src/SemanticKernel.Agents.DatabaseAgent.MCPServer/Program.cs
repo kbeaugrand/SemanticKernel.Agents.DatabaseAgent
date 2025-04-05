@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
 
@@ -13,7 +14,10 @@ internal class Program
                                                 .AddCommandLine(args)
                                                 .Build();
 
-        var kernel = AgentKernelFactory.ConfigureKernel(configuration);
+        var kernel = AgentKernelFactory.ConfigureKernel(configuration, logging =>
+        {
+            logging.ClearProviders();
+        });
 
         var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
 
