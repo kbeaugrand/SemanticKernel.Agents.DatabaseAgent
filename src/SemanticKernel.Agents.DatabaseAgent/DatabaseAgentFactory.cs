@@ -36,20 +36,47 @@ public static class DatabaseAgentFactory
 
         if (vectorStore is null)
         {
-            throw new InvalidOperationException("The kernel does not have a vector store.");
+            throw new InvalidOperationException("The kernel does not have a vector store for table defintions.");
+        }
+
+        var agentStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>();
+
+        if (agentStore is null)
+        {
+            throw new InvalidOperationException("The kernel does not have a vector store for agent.");
         }
 
         await vectorStore.CreateCollectionIfNotExistsAsync()
                          .ConfigureAwait(false);
 
-        var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken ?? CancellationToken.None);
+        await agentStore.CreateCollectionIfNotExistsAsync()
+                         .ConfigureAwait(false);
 
-        return await BuildAgentAsync(kernel, tableDescriptions, cancellationToken ?? CancellationToken.None)
+        return await BuildAgentAsync(kernel, cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
 
-    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, string tableDescriptions, CancellationToken cancellationToken)
+    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, CancellationToken cancellationToken)
     {
+        var agentKernel = kernel.Clone();
+
+        var existingDefinition = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
+                                            .GetAsync(Guid.Empty)
+                                            .ConfigureAwait(false);
+
+        if (existingDefinition is not null)
+        {
+            return new DatabaseKernelAgent
+            {
+                Kernel = agentKernel,
+                Name = existingDefinition.AgentName,
+                Description = existingDefinition.Description,
+                Instructions = existingDefinition.Instructions
+            };
+        }
+
+        var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken);
+
         var agentDescription = await KernelFunctionFactory.CreateFromPrompt(_agentDescriptionPrompt, promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
@@ -71,16 +98,30 @@ public static class DatabaseAgentFactory
                                         })
                                         .ConfigureAwait(false);
 
-        var agentKernel = kernel.Clone();
-
         agentKernel.ImportPluginFromType<DatabasePlugin>();
+
+        var agentDefinition = new AgentDefinitionSnippet
+        {
+            Key = Guid.Empty,
+            AgentName = agentName.GetValue<string>()!,
+            Description = agentDescription.GetValue<string>()!,
+            Instructions = agentInstructions.GetValue<string>()!
+        };
+
+        agentDefinition.TextEmbedding = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
+                                                        .GenerateEmbeddingAsync(agentDefinition.Description)
+                                                        .ConfigureAwait(false);
+
+        _ = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
+                        .UpsertAsync(agentDefinition, cancellationToken)
+                        .ConfigureAwait(false);
 
         return new DatabaseKernelAgent()
         {
             Kernel = agentKernel,
-            Name = agentName.GetValue<string>(),
-            Description = agentDescription.GetValue<string>(),
-            Instructions = agentInstructions.GetValue<string>()
+            Name = agentDefinition.AgentName,
+            Description = agentDefinition.Description,
+            Instructions = agentDefinition.Instructions
         };
     }
 
@@ -90,7 +131,7 @@ public static class DatabaseAgentFactory
 
         var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), cancellationToken)
                                                                 .ConfigureAwait(false);
-        
+
         var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
         await foreach (var (tableName, definition, description) in descriptions)
@@ -157,9 +198,9 @@ public static class DatabaseAgentFactory
         await foreach (var item in tables)
         {
             var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
-                                                    .VectorizedSearchAsync((await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
+                                                    .VectorizedSearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
                                                         .GenerateEmbeddingAsync(item)
-                                                        .ConfigureAwait(false)))
+                                                        .ConfigureAwait(false))
                                                     .ConfigureAwait(false);
 
             var existingRecord = await existingRecordSearch.Results.FirstOrDefaultAsync(c => c.Record.TableName == item)
