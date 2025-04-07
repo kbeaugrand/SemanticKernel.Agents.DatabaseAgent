@@ -20,15 +20,12 @@ Tables managed:
 3. **Customers**: Stores customer profiles and contact information.
 
 **Output**:
-Manage customer orders, products, and profiles to facilitate the online sales process.
-
-### Relationships
-
-Each order is linked to a corresponding customer and one or more products.
-
-### Examples of actions supported
-
-Search for orders, update product inventory, retrieve and manage customer details.
+```json
+{
+  "description": ""Manage customer orders, products, and profiles to facilitate the online sales process.\n### Relationships\nEach order is linked to a corresponding customer and one or more products.\n### Examples of actions supported\nSearch for orders, update product inventory, retrieve and manage customer details.",
+	
+}
+```
 [END OF EXAMPLE]
 
 # Notes

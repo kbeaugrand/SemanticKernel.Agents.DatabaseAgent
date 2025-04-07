@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Azure;
+using Microsoft.Extensions.Configuration;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using ModelContextProtocol.Protocol.Transport;
@@ -65,18 +67,21 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                                 throw new McpServerException("Missing required argument 'message'");
                             }
 
-                            var responses = agent.InvokeAsync(new ChatHistory(message.ToString()!, AuthorRole.User));
+                            var kernelArguments = new KernelArguments
+                            {
+                                { "prompt", message }
+                            };
+
+                            var responses = await agent.Kernel.Plugins[nameof(DatabasePlugin)]["ExecuteQuery"]
+                                                        .InvokeAsync(kernel: agent.Kernel, kernelArguments);
 
                             var callToolResponse = new CallToolResponse();
 
-                            await foreach (var response in responses)
+                            callToolResponse.Content.Add(new()
                             {
-                                callToolResponse.Content.Add(new()
-                                {
-                                    Type = "text",
-                                    Text = response.Content
-                                });
-                            }
+                                Type = "text",
+                                Text = responses.GetValue<string>()
+                            });
 
                             return callToolResponse;
                         }

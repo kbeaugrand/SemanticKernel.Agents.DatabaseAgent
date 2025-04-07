@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Text;
+using System.Text.Json;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
@@ -29,12 +30,15 @@ public class DatabasePlugin
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._vectorStore = vectorStore;
 
+#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
         this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
         {
             MaxTokens = 4096,
             Temperature = 0.1,
-            TopP = 0.1
+            TopP = 0.1, 
+            ResponseFormat = "json_object"
         });
+#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
     }
 
     [Description("Execute a query into the database. " +
@@ -67,9 +71,8 @@ public class DatabasePlugin
 
             var tableDefinitions = tableDefinitionsSb.ToString();
 
-
             var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
-                            .ConfigureAwait(false);
+                                            .ConfigureAwait(false);
 
             var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
 
@@ -118,7 +121,7 @@ public class DatabasePlugin
         var functionResult = await this._writeSQLFunction.InvokeAsync(kernel, arguments, cancellationToken)
                                                          .ConfigureAwait(false);
 
-        return functionResult.GetValue<string>()!;
+        return JsonSerializer.Deserialize<WriteSQLQueryResponse>(functionResult.GetValue<string>()!)!.Query!;
     }
 
     private static async Task InvokeFiltersOrQueryAsync(
