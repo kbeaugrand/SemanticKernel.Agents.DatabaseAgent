@@ -17,12 +17,12 @@ public class QueryRelevancyFilter : IQueryExecutionFilter
         Options = options.Value;
     }
 
-    public async Task OnQueryExecutionAsync(QueryExecutionContext context, Func<QueryExecutionContext, Task> next)
+    public async Task<(bool filtered, string message)> OnQueryExecutionAsync(QueryExecutionContext context, Func<QueryExecutionContext, Task<(bool, string)>> next)
     {
         if (!this.Options.EnableQueryRelevancyFilter)
         {
             await next(context);
-            return;
+            return (false, string.Empty);
         }
 
         QueryRelevancyEvaluator evaluator = new QueryRelevancyEvaluator(context.Kernel);
@@ -32,9 +32,9 @@ public class QueryRelevancyFilter : IQueryExecutionFilter
         if (relevancy < Options.QueryRelevancyThreshold)
         {
             Logger.LogWarning("Query relevancy is below threshold. Skipping query execution.");
-            return;
+            return (true, "Generated query doesn't seems relevant, try to modify you prompt to get a better query.");
         }
 
-        await next(context);
+        return await next(context);
     }
 }

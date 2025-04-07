@@ -2,5 +2,5 @@
 
 public interface IQueryExecutionFilter
 {
-    public Task OnQueryExecutionAsync(QueryExecutionContext context, Func<QueryExecutionContext, Task> next);
+    public Task<(bool filtered, string message)> OnQueryExecutionAsync(QueryExecutionContext context, Func<QueryExecutionContext, Task<(bool, string)>> next);
 }

@@ -76,20 +76,17 @@ public class DatabasePlugin
 
             var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
 
-            bool isQueryExecutionFiltered = true;
-
-            await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
+            (bool isQueryExecutionFiltered, string filterMessage) = await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
                                      _ =>
                                     {
-                                        isQueryExecutionFiltered = false;
-                                        return Task.CompletedTask;
+                                        return Task.FromResult((false, string.Empty));
                                     },
                                     queryExecutionContext)
                                 .ConfigureAwait(false);
 
             if (isQueryExecutionFiltered)
             {
-                return "Query execution was filtered.";
+                return filterMessage;
             }
 
             using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
@@ -124,20 +121,20 @@ public class DatabasePlugin
         return JsonSerializer.Deserialize<WriteSQLQueryResponse>(functionResult.GetValue<string>()!)!.Query!;
     }
 
-    private static async Task InvokeFiltersOrQueryAsync(
+    private static async Task<(bool, string)> InvokeFiltersOrQueryAsync(
         List<IQueryExecutionFilter>? functionFilters,
-        Func<QueryExecutionContext, Task> functionCallback,
+        Func<QueryExecutionContext, Task<(bool, string)>> functionCallback,
         QueryExecutionContext context,
         int index = 0)
     {
         if (functionFilters is { Count: > 0 } && index < functionFilters.Count)
         {
-            await functionFilters[index].OnQueryExecutionAsync(context,
+            return await functionFilters[index].OnQueryExecutionAsync(context,
                 (context) => InvokeFiltersOrQueryAsync(functionFilters, functionCallback, context, index + 1)).ConfigureAwait(false);
         }
         else
         {
-            await functionCallback(context).ConfigureAwait(false);
+            return await functionCallback(context).ConfigureAwait(false);
         }
     }
 }
