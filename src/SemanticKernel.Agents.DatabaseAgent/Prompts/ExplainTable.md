@@ -34,9 +34,12 @@ Table Definition:
 - updated_at: DATETIME  
 ```
 
-**Output**:  
-This table appears to store information about customers. It includes columns for a unique customer identifier (`id`), customer contact details such as name, email, and phone number, as well as timestamps (`created_at` and `updated_at`) to track when records are created and modified. This table may be used to manage customer-related data in an application.
-
+**Output**:
+```json
+{
+  "description": "This table appears to store information about customers. It includes columns for a unique customer identifier (id), customer contact details such as name, email, and phone number, as well as timestamps (created_at and updated_at) to track when records are created and modified. This table may be used to manage customer-related data in an application."
+}
+```
 ---
 
 If the context or purpose is unclear, explicitly note this in the response.

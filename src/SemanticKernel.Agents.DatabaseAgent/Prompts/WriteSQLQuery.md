@@ -17,10 +17,21 @@ Provide the query aligned with the syntax of the specified DBMS provider, ensuri
    - Ensure the query is valid for the described schema, using the exact table and column names provided.
    - Prioritize clarity and optimization for the specified DBMS.
 
+## Important
+
+You should only use SQL syntax that is compatible with the specified DBMS provider. If the provider is not specified, assume standard SQL syntax.
+ 
 # Output Format 
 
-The SQL query should not be wrapped in a Markdown ```sql block.
-Only return the SQL query as plain text.
+```json
+{
+
+ "query": "SELECT ... FROM ... WHERE ...",
+  "comments": [
+    "Assumptions made about the query structure.",
+    "Any specific optimizations or considerations for the DBMS."
+  ]}
+```
 
 # Examples
 

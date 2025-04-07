@@ -10,6 +10,7 @@ using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
@@ -19,7 +20,10 @@ public static class DatabaseAgentFactory
     {
         MaxTokens = 4096,
         Temperature = 0.1,
-        TopP = 0.1
+        TopP = 0.1,
+#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+        ResponseFormat = "json_object"
+#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
     };
 
     private static string _agentDescriptionPrompt = EmbeddedPromptProvider.ReadPrompt("AgentDescriptionGenerator");
@@ -52,6 +56,7 @@ public static class DatabaseAgentFactory
         await agentStore.CreateCollectionIfNotExistsAsync()
                          .ConfigureAwait(false);
 
+        
         return await BuildAgentAsync(kernel, cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
@@ -59,6 +64,7 @@ public static class DatabaseAgentFactory
     private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, CancellationToken cancellationToken)
     {
         var agentKernel = kernel.Clone();
+        agentKernel.ImportPluginFromType<DatabasePlugin>();
 
         var existingDefinition = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
                                             .GetAsync(Guid.Empty)
@@ -98,14 +104,12 @@ public static class DatabaseAgentFactory
                                         })
                                         .ConfigureAwait(false);
 
-        agentKernel.ImportPluginFromType<DatabasePlugin>();
-
         var agentDefinition = new AgentDefinitionSnippet
         {
             Key = Guid.Empty,
-            AgentName = agentName.GetValue<string>()!,
-            Description = agentDescription.GetValue<string>()!,
-            Instructions = agentInstructions.GetValue<string>()!
+            AgentName = JsonSerializer.Deserialize<AgentNameRespone>(agentName.GetValue<string>()!)!.Name,
+            Description = JsonSerializer.Deserialize<AgentDescriptionResponse>(agentDescription.GetValue<string>()!)!.Description,
+            Instructions = JsonSerializer.Deserialize<AgentInstructionsResponse>(agentInstructions.GetValue<string>()!)!.Instructions
         };
 
         agentDefinition.TextEmbedding = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
@@ -173,7 +177,9 @@ public static class DatabaseAgentFactory
             })
             .ConfigureAwait(false);
 
-        using var reader = await QueryExecutor.ExecuteSQLAsync(connection, tablesGenerator.GetValue<string>()!, null, cancellationToken)
+        var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
+
+        using var reader = await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
                             .ConfigureAwait(false);
 
         foreach (DataRow row in reader!.Rows)
@@ -214,11 +220,13 @@ public static class DatabaseAgentFactory
 
             var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"What is the current CREATE statements for table '{item}'" }
+                    { "prompt", $"Write the SQL query that returns the current SQL CREATE statement for '{item}' in {connection.GetProviderName()}" }
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
-            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, definition.GetValue<string>()!, null, cancellationToken)
+            var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
+
+            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
                                             .ConfigureAwait(false)); ;
 
             var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
@@ -227,7 +235,7 @@ public static class DatabaseAgentFactory
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (item, tableDefinition, description.GetValue<string>())!;
+            yield return (item, tableDefinition, JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!.Description)!;
         }
     }
 }

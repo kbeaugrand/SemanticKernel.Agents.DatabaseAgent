@@ -1,5 +1,15 @@
 Based on the given description of an agent, generate a set of clear instructions for the agent to follow. The agent should utilize its available tools effectively to ensure accurate and reliable responses.
 
+### Format
+
+The instructions should be structured in markdown that is easy for the agent to understand and implement.
+
+```json
+{
+  "instructions": "<MarkDown instructions>"
+}
+```
+
 ### Guidelines
 
 **1. Understand the Task**  

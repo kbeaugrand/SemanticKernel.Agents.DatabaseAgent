@@ -23,16 +23,20 @@ Generate a creative and fitting agent name based on the provided agent descripti
 **Input:**  
 Agent Description: An AI that provides financial advice and budgeting tips, focusing on simplicity, logic, and trustworthiness.  
 
-**Output:**  
-FinGuard  
+**Output:**
+{
+	"name": "FinGuard"
+}
 
 ---
 
 **Input:**  
 Agent Description: A playful chatbot designed to engage children in learning grammar and vocabulary.  
 
-**Output:**  
-WordWhiz  
+**Output:**
+{
+	"name": "WordWhiz"
+}  
 
 ## Notes
 
