@@ -4,6 +4,7 @@ using MySql.Data.MySqlClient;
 using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
+using System.Data.Odbc;
 using System.Data.OleDb;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer;
@@ -31,6 +32,9 @@ public class DbConnectionFactory
 
             case "access":
                 return new OleDbConnection(connectionString);
+
+            case "odbc": 
+                return new OdbcConnection(connectionString);
 
             default:
                 throw new ArgumentException($"Unsupported provider type: {providerType}");
