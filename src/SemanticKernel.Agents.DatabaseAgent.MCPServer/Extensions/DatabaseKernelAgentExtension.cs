@@ -67,21 +67,19 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                                 throw new McpServerException("Missing required argument 'message'");
                             }
 
-                            var kernelArguments = new KernelArguments
-                            {
-                                { "prompt", message }
-                            };
-
-                            var responses = await agent.Kernel.Plugins[nameof(DatabasePlugin)]["ExecuteQuery"]
-                                                        .InvokeAsync(kernel: agent.Kernel, kernelArguments);
+                            var responses = agent.InvokeAsync(new ChatMessageContent(AuthorRole.User, message.ToString()), thread: null)
+                                                    .ConfigureAwait(false);
 
                             var callToolResponse = new CallToolResponse();
 
-                            callToolResponse.Content.Add(new()
+                            await foreach (var item in responses)
                             {
-                                Type = "text",
-                                Text = responses.GetValue<string>()
-                            });
+                                callToolResponse.Content.Add(new()
+                                {
+                                    Type = "text",
+                                    Text = item.Message.Content!
+                                });
+                            }
 
                             return callToolResponse;
                         }
