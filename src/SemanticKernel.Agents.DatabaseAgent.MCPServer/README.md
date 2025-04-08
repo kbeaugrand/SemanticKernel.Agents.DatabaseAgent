@@ -70,7 +70,7 @@ The following database providers are supported:
 - `postgresql`: PostgreSQL database provider
 - `oracle`: Oracle database provider
 - `oledb`: OLE DB database provider
-
+- `odbc`: ODBC database provider
 
 #### Memory options
 
