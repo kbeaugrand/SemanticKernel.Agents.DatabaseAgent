@@ -70,6 +70,12 @@ internal static class AgentKernelFactory
 
         kernelBuilder.Services.AddScoped(sp => DbConnectionFactory.CreateDbConnection(databaseSettings.ConnectionString, databaseSettings.Provider));
 
+        kernelBuilder.Services.Configure<DatabasePluginOptions>(options =>
+        {
+            configuration.GetSection("memory")
+                            .Bind(options);
+        });
+
         switch (memorySettings.Get<MemorySettings>()!.Kind)
         {
             case MemorySettings.StorageType.Volatile:
