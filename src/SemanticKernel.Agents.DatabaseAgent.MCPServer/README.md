@@ -87,6 +87,26 @@ As a default, the memory is set to `Volatile`, which means that the memory is no
     - **Type**: `int`  
     - **Example**: `--memory:Dimensions=1536`  
 
+`--memory:TopK`
+    - **Description**: The number of tables to return from the memory.
+    - **Type**: `int`  
+    - **Example**: `--memory:TopK=5`  
+
+`--memory:MaxTokens`
+    - **Description**: The maximum number of tokens to be used for the sql query generation.
+    - **Type**: `int`  
+    - **Example**: `--memory:MaxTokens=1000`
+
+`--memory:Temperature`
+    - **Description**: The temperature to be used for the sql query generation.
+    - **Type**: `float`  
+    - **Example**: `--memory:Temperature=0.5`
+
+`--memory:TopP`
+    - **Description**: The top p to be used for the sql query generation.
+    - **Type**: `float`  
+    - **Example**: `--memory:TopP=0.9`
+
 You can also set the memory to persist the data in a database. At the moment, the only supported database provider is `sqlite` and `Qdrant` but more providers will be added in the future.
 
 ##### SQLite options

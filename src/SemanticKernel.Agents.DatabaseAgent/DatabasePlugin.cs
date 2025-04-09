@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -23,21 +24,27 @@ internal sealed class DatabasePlugin
 
     private readonly IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> _vectorStore;
 
-    public DatabasePlugin(IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore, ILoggerFactory? loggerFactory = null)
+    private readonly DatabasePluginOptions _options;
+
+    public DatabasePlugin(
+        IOptions<DatabasePluginOptions> options,
+        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore, 
+        ILoggerFactory? loggerFactory = null)
     {
+        this._options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         this._loggerFactory = loggerFactory;
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._vectorStore = vectorStore;
 
         this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
         {
-            MaxTokens = 4096,
-            Temperature = 0.1,
-            TopP = 0.1,
+            MaxTokens = this._options.MaxTokens,
+            Temperature = this._options.Temperature,
+            TopP = this._options.TopP,
+            Seed = 0,
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
             ResponseFormat = "json_object"
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
         });
     }
 
@@ -61,7 +68,7 @@ internal sealed class DatabasePlugin
 
             var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, options: new()
             {
-                Top = 5
+                Top = this._options.TopK
             }, cancellationToken: cancellationToken)
                    .ConfigureAwait(false);
 
@@ -109,8 +116,8 @@ internal sealed class DatabasePlugin
     }
 
     private async Task<string> GetSQLQueryStringAsync(Kernel kernel,
-                                                              string prompt,
-                                                              string tablesDefinitions,
+                                                      string prompt,
+                                                      string tablesDefinitions,
                                             CancellationToken cancellationToken)
     {
         var arguments = new KernelArguments()
