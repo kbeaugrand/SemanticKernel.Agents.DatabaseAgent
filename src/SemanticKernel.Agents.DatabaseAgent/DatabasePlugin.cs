@@ -8,14 +8,13 @@ using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.ComponentModel;
-using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Text.Json;
 
 namespace SemanticKernel.Agents.DatabaseAgent;
 
-public class DatabasePlugin
+internal sealed class DatabasePlugin
 {
     private readonly ILogger<DatabasePlugin> _log;
     private readonly KernelFunction _writeSQLFunction;
@@ -30,15 +29,16 @@ public class DatabasePlugin
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._vectorStore = vectorStore;
 
-#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
         this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
         {
             MaxTokens = 4096,
             Temperature = 0.1,
-            TopP = 0.1, 
+            TopP = 0.1,
+#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
             ResponseFormat = "json_object"
-        });
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+
+        });
     }
 
     [Description("Execute a query into the database. " +
@@ -59,7 +59,10 @@ public class DatabasePlugin
             var embeddings = await textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
                                                                         .ConfigureAwait(false);
 
-            var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, cancellationToken: cancellationToken)
+            var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, options: new()
+            {
+                Top = 5
+            }, cancellationToken: cancellationToken)
                    .ConfigureAwait(false);
 
             var tableDefinitionsSb = new StringBuilder();
@@ -92,7 +95,11 @@ public class DatabasePlugin
             using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
                                                      .ConfigureAwait(false);
 
-            return MarkdownRenderer.Render(dataTable);
+            var result = MarkdownRenderer.Render(dataTable);
+
+            this._log.LogInformation("Query result: {result}", result);
+
+            return result;
         }
         catch (Exception e)
         {

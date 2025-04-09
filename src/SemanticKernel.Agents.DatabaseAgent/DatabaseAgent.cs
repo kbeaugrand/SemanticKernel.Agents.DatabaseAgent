@@ -2,6 +2,7 @@
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Services;
+using SemanticKernel.Agents.DatabaseAgent;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -17,7 +18,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
     /// </summary>
     internal DatabaseKernelAgent()
     {
-  
+
     }
 
     /// <summary>
@@ -175,10 +176,6 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
                 arguments?.ExecutionSettings,
                 arguments ?? []);
 
-        executionSettings ??= new PromptExecutionSettings();
-
-        executionSettings!.FunctionChoiceBehavior = FunctionChoiceBehavior.Auto();
-
         return (chatCompletionService, executionSettings);
     }
 
@@ -220,6 +217,17 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
     {
         kernel ??= this.Kernel;
         arguments = this.MergeArguments(arguments);
+
+        var plugin = kernel.CreatePluginFromType<DatabasePlugin>();
+
+        var data = await plugin["ExecuteQuery"].InvokeAsync(kernel, new KernelArguments
+                                                    {
+                                                        {"prompt", history.Last(c => c.Role == AuthorRole.User).Content! }
+                                                    }, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        history.Insert(0, new ChatMessageContent(AuthorRole.System, "Executing query...") { AuthorName = this.Name });
+        history.Insert(1, new ChatMessageContent(AuthorRole.System, data.GetValue<string>()) { AuthorName = this.Name });
 
         (IChatCompletionService chatCompletionService, PromptExecutionSettings? executionSettings) = GetChatCompletionService(kernel, arguments);
 

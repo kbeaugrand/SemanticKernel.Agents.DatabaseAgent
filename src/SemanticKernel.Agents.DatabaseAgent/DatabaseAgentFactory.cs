@@ -64,7 +64,6 @@ public static class DatabaseAgentFactory
     private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, CancellationToken cancellationToken)
     {
         var agentKernel = kernel.Clone();
-        agentKernel.ImportPluginFromType<DatabasePlugin>();
 
         var existingDefinition = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
                                             .GetAsync(Guid.Empty)
