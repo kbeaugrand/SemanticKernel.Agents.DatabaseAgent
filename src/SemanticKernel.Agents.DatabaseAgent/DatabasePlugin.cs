@@ -28,7 +28,7 @@ internal sealed class DatabasePlugin
 
     public DatabasePlugin(
         IOptions<DatabasePluginOptions> options,
-        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore, 
+        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore,
         ILoggerFactory? loggerFactory = null)
     {
         this._options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -76,6 +76,7 @@ internal sealed class DatabasePlugin
 
             await foreach (var relatedTable in relatedTables.Results)
             {
+                tableDefinitionsSb.AppendLine($"## {relatedTable.Record.TableName}");
                 tableDefinitionsSb.AppendLine(relatedTable.Record.Definition);
             }
 
@@ -83,6 +84,12 @@ internal sealed class DatabasePlugin
 
             var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
                                             .ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(sqlQuery))
+            {
+                this._log.LogWarning("SQL query is empty for prompt: {prompt}", prompt);
+                throw new InvalidOperationException("The kernel was unable to generate the expected query.");
+            }
 
             var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
 

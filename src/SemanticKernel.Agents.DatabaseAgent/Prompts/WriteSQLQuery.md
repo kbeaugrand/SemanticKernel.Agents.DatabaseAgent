@@ -1,4 +1,4 @@
-﻿Create a SQL query based on the information provided, including the DBMS type, the natural language description, and the table/column definitions.
+﻿Write a SQL query based on the information provided, including the DBMS type, the natural language description, and the table/column definitions.
 
 Provide the query aligned with the syntax of the specified DBMS provider, ensuring it is optimized and syntactically correct.
 
@@ -14,6 +14,7 @@ Provide the query aligned with the syntax of the specified DBMS provider, ensuri
    - Use JOIN operations, filters, aggregations (e.g., GROUP BY), and conditions (e.g., WHERE, HAVING) as required by the query.
 
 3. **Verify Correctness:**
+   - Ensure to fully qualify the name with the correct schema and catalog.
    - Ensure the query is valid for the described schema, using the exact table and column names provided.
    - Prioritize clarity and optimization for the specified DBMS.
 
@@ -25,8 +26,7 @@ You should only use SQL syntax that is compatible with the specified DBMS provid
 
 ```json
 {
-
- "query": "SELECT ... FROM ... WHERE ...",
+  "query": "SELECT ... FROM ... WHERE ...",
   "comments": [
     "Assumptions made about the query structure.",
     "Any specific optimizations or considerations for the DBMS."
@@ -49,10 +49,14 @@ You should only use SQL syntax that is compatible with the specified DBMS provid
 
 #### Output:
 
-SELECT name, email
-FROM users
-WHERE registered_date > '2023-01-01';
-
+```json
+{
+  "query": "SELECT name, email FROM users WHERE registered_date > '2023-01-01'",
+  "comments": [
+    "Assumes 'registered_date' is stored in a DATE or DATETIME format compatible with the string '2023-01-01'.",
+    "Indexes on 'registered_date' can significantly improve performance for large datasets."
+  ]
+```
 
 ---
 
@@ -71,11 +75,16 @@ WHERE registered_date > '2023-01-01';
     - `amount`: NUMERIC
 
 #### Output:
-SELECT p.name, SUM(s.amount) AS total_sales
-FROM products p
-JOIN sales s ON p.id = s.product_id
-GROUP BY p.name
-HAVING SUM(s.amount) > 1000;
+```json
+{
+  "query": "SELECT p.name, SUM(s.amount) AS total_sales FROM products p JOIN sales s ON p.id = s.product_id GROUP BY p.name HAVING SUM(s.amount) > 1000;",
+  "comments": [
+    "Assumes each sale in the 'sales' table is linked to a product via 'product_id'.",
+    "Using HAVING instead of WHERE because aggregate function SUM(s.amount) is used for filtering.",
+    "Ensure proper indexing on 'sales.product_id' and possibly 'sales.amount' for better performance.",
+    "GROUP BY on 'p.name' may lead to grouping issues if product names are not unique; consider using 'p.id' instead for more accuracy."
+  ]}
+```
 
 Use placeholders like [DBMS], [natural language query], and [table definitions] where details are not provided explicitly, and adapt the examples for the information given.
 

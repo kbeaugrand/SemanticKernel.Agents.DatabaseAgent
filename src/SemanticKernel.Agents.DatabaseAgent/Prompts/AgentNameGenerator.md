@@ -24,9 +24,11 @@ Generate a creative and fitting agent name based on the provided agent descripti
 Agent Description: An AI that provides financial advice and budgeting tips, focusing on simplicity, logic, and trustworthiness.  
 
 **Output:**
+```json
 {
 	"name": "FinGuard"
 }
+```
 
 ---
 
@@ -34,9 +36,11 @@ Agent Description: An AI that provides financial advice and budgeting tips, focu
 Agent Description: A playful chatbot designed to engage children in learning grammar and vocabulary.  
 
 **Output:**
+```json
 {
 	"name": "WordWhiz"
 }  
+```
 
 ## Notes
 

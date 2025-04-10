@@ -56,7 +56,6 @@ public static class DatabaseAgentFactory
         await agentStore.CreateCollectionIfNotExistsAsync()
                          .ConfigureAwait(false);
 
-        
         return await BuildAgentAsync(kernel, cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
@@ -137,7 +136,7 @@ public static class DatabaseAgentFactory
 
         var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
-        await foreach (var (tableName, definition, description) in descriptions)
+        await foreach (var (tableName, definition, description, dataSample) in descriptions)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
 
@@ -148,8 +147,9 @@ public static class DatabaseAgentFactory
                                 TableName = tableName,
                                 Definition = definition,
                                 Description = description,
+                                SampleData = dataSample,
                                 TextEmbedding = await embeddingTextGenerator.GenerateEmbeddingAsync(description, cancellationToken: cancellationToken)
-                                                                            .ConfigureAwait(false)
+                                                                                                    .ConfigureAwait(false)
                             })
                             .ConfigureAwait(false);
 
@@ -179,62 +179,84 @@ public static class DatabaseAgentFactory
         var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
 
         using var reader = await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
-                            .ConfigureAwait(false);
+                                        .ConfigureAwait(false);
 
         foreach (DataRow row in reader!.Rows)
         {
-            yield return row[0].ToString()!;
+            yield return MarkdownRenderer.Render(row);
         }
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(_tableDescriptionPrompt, promptExecutionSettings);
         var defaultKernelArguments = new KernelArguments
             {
-                { "providerName", connection.GetProviderName() },
-                { "tablesDefinitions", "" }
+                { "providerName", connection.GetProviderName() }
             };
 
         StringBuilder sb = new StringBuilder();
 
         await foreach (var item in tables)
         {
+            var tableNameResponse = await kernel.InvokePromptAsync("Extract the fully qualified table name from this: {{$item}}. \r\n" +
+                                                                    "DO NOT PROVIDE more than the fully qualified name.",
+                                    new KernelArguments
+                                    {
+                                            { "item", item }
+                                    }, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            var tableName = tableNameResponse.GetValue<string>();
+
             var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
                                                     .VectorizedSearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
                                                         .GenerateEmbeddingAsync(item)
                                                         .ConfigureAwait(false))
                                                     .ConfigureAwait(false);
 
-            var existingRecord = await existingRecordSearch.Results.FirstOrDefaultAsync(c => c.Record.TableName == item)
+            var existingRecord = await existingRecordSearch.Results.FirstOrDefaultAsync(c => c.Record.TableName == tableName)
                                                 .ConfigureAwait(false);
 
             if (existingRecord is not null)
             {
-                yield return (item, existingRecord.Record.Definition!, existingRecord.Record.Description!);
+                yield return (tableName!, existingRecord.Record.Definition!, existingRecord.Record.Description!, existingRecord.Record.SampleData!);
                 continue;
             }
 
             var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"Write the SQL query that returns the current SQL CREATE statement for '{item}' in {connection.GetProviderName()}" }
+                    { "prompt", $"Show the current structure of '{tableName}'" }
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
-            var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
+            var tableStructureResponse = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
 
-            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
-                                            .ConfigureAwait(false)); ;
+            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableStructureResponse.Query, null, cancellationToken)
+                                            .ConfigureAwait(false));
+
+            var extract = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
+                {
+                    { "prompt", $"Get the first 5 rows for '{tableName}'" }
+                }, cancellationToken)
+                    .ConfigureAwait(false);
+
+            var tableDataStructure = JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!)!;
+
+            var tableExtract = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableDataStructure.Query, null, cancellationToken)
+                                            .ConfigureAwait(false));
 
             var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
                                     {
-                                        { "tableDefinition", definition }
+                                        { "tableDefinition", definition },
+                                        { "tableDataExtract", tableExtract }
                                     })
                                     .ConfigureAwait(false);
 
-            yield return (item, tableDefinition, JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!.Description)!;
+            var tableExplain = JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!;
+
+            yield return (tableName, tableDefinition, tableExplain.Description, tableExtract)!;
         }
     }
 }
