@@ -28,7 +28,7 @@ internal sealed class DatabasePlugin
 
     public DatabasePlugin(
         IOptions<DatabasePluginOptions> options,
-        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore, 
+        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore,
         ILoggerFactory? loggerFactory = null)
     {
         this._options = options?.Value ?? throw new ArgumentNullException(nameof(options));

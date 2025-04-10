@@ -44,5 +44,33 @@ namespace SemanticKernel.Agents.DatabaseAgent.Internals
 
             return result.ToString();
         }
+
+        public static string Render(DataRow data)
+        {
+            var result = new StringBuilder();
+
+            // Append column names
+            for (int i = 0; i < data.Table.Columns.Count; i++)
+            {
+                result.Append($"| {data.Table.Columns[i].ColumnName} ");
+            }
+            result.AppendLine("|");
+
+            // Append separator
+            for (int i = 0; i < data.Table.Columns.Count; i++)
+            {
+                result.Append("| --- ");
+            }
+            result.AppendLine("|");
+
+            for (int i = 0; i < data.Table.Columns.Count; i++)
+            {
+                result.Append($"| {data[i]} ");
+            }
+            result.AppendLine("|");
+
+
+            return result.ToString();
+        }
     }
 }
