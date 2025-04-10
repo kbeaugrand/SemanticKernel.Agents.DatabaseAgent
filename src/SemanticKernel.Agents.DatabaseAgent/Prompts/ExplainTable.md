@@ -51,4 +51,8 @@ If the context or purpose is unclear, explicitly note this in the response.
 Table Definition:  
 {{$tableDefinition}}
 ```
+```
+Table extract:  
+{{$tableDataExtract}}
+```
 **Output**: 
