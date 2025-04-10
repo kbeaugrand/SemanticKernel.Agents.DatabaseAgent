@@ -70,7 +70,7 @@ The following database providers are supported:
 - `postgresql`: PostgreSQL database provider
 - `oracle`: Oracle database provider
 - `oledb`: OLE DB database provider
-- `odbc`: ODBC database provider
+- `odbc`: ODBC database provider. (When using this provider, you need to ensure that the ODBC driver is installed and configured on your system. The connection string format may vary based on the ODBC driver you are using. Refer to the documentation of your specific ODBC driver for the correct connection string format.) 
 
 #### Memory options
 
