@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -15,6 +16,8 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
     {
         public static IMcpServer ToMcpServer(this DatabaseKernelAgent agent, IConfiguration configuration, ILoggerFactory? loggerFactory = null)
         {
+            loggerFactory ??= NullLoggerFactory.Instance;
+
             IServerTransport transport = null!;
 
             var options = GetMcpServerOptions(agent);
