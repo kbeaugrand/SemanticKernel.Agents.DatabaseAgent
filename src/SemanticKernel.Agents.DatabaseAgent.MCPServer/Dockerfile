@@ -21,6 +21,10 @@ RUN dotnet publish "./SemanticKernel.Agents.DatabaseAgent.MCPServer.csproj" -c $
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 
+LABEL org.opencontainers.image.source=https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent
+LABEL org.opencontainers.image.description="The MCP Database Agent is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL)."
+LABEL org.opencontainers.image.licenses=MIT
+
 ARG RUNTIME_SDK_INSTALLER=void
 ARG VERSION=2.9.1
 ARG OS=Debian-64bit
