@@ -21,7 +21,7 @@ internal class Program
 
         var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
 
-        await using var mcpServer = agent.ToMcpServer();
+        await using var mcpServer = agent.ToMcpServer(configuration);
 
         await mcpServer.StartAsync();
 
