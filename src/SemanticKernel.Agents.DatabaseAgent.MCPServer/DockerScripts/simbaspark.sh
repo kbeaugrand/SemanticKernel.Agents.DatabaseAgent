@@ -30,7 +30,7 @@ rm -rf docs
 
 # Install dependencies
 apt-get update && \
-	apt-get install -y --no-install-recommends libsasl2-2 libsasl2-modules-gssapi-mit libodbc \
+	apt-get install -y --no-install-recommends libsasl2-2 libsasl2-modules-gssapi-mit libodbc2 \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install the package from deb file
