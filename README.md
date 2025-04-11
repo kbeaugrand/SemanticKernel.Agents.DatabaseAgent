@@ -53,6 +53,70 @@ var responses = agent.InvokeAsync([new ChatMessageContent { Content = question, 
                                             .ConfigureAwait(false);
 ```
 
+### Behind the scenes
+
+Here is a simplified sequence diagram of how the Database Agent is constructed using the Semantic Kernel before it can be used:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client
+    participant DatabaseAgentFactory
+    participant SemanticKernel
+    participant Database
+
+    Client->>DatabaseAgentFactory: CreateAgentAsync(kernel)
+    DatabaseAgentFactory->>SemanticKernel: Access services (vector store, embedding, prompts)
+
+    DatabaseAgentFactory->>DatabaseAgentFactory: MemorizeAgentSchema()
+    DatabaseAgentFactory->>Database: Fetch list of tables
+    loop For each table
+        DatabaseAgentFactory->>Database: Get structure and data sample
+        DatabaseAgentFactory->>SemanticKernel: Generate table description
+        DatabaseAgentFactory->>SemanticKernel: Embed and store definition
+    end
+
+    DatabaseAgentFactory->>SemanticKernel: Generate agent description
+    DatabaseAgentFactory->>SemanticKernel: Generate name and instructions
+    DatabaseAgentFactory->>SemanticKernel: Embed and store agent
+
+    DatabaseAgentFactory-->>Client: Return DatabaseKernelAgent
+```
+
+Then, once the agent is created, the client can use it to execute queries.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User
+    participant DatabasePlugin
+    participant SemanticKernel
+    participant Database
+
+    User->>DatabasePlugin: ExecuteQueryAsync(prompt)
+
+    DatabasePlugin->>SemanticKernel: Generate embedding for prompt
+    SemanticKernel-->>DatabasePlugin: Embedding
+
+    DatabasePlugin->>SemanticKernel: Vector search for related tables
+    SemanticKernel-->>DatabasePlugin: Matching table definitions
+
+    DatabasePlugin->>SemanticKernel: Generate SQL query (WriteSQLQuery prompt)
+    SemanticKernel-->>DatabasePlugin: SQL query string
+
+    DatabasePlugin->>DatabasePlugin: Check query filters (optional)
+    alt Query is allowed
+        DatabasePlugin->>Database: Execute SQL query
+        Database-->>DatabasePlugin: Query result
+        DatabasePlugin-->>User: Markdown-formatted result
+    else Query is blocked
+        DatabasePlugin-->>User: Filter message
+    end
+
+    Note over DatabasePlugin: Logs and error handling during the process
+
+```
+
 ## Quality insurance
 
 Using LLM agents to write and execute its own queries into a database might lead to risks such as unintended data exposure, security vulnerabilities, and inefficient query execution, potentially compromising system integrity and compliance requirements.
