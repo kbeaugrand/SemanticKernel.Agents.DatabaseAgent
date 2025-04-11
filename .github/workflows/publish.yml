@@ -12,8 +12,20 @@ env:
 
 jobs:
   docker:
+    name: Build and Push MCP Docker Image
     runs-on: ubuntu-latest
-         
+    strategy:
+      matrix:
+        tag: ['Default', 'ODBCSpark']
+        include:
+          - tag: Default
+            installer: void
+          - tag: ODBCSpark
+            image_name: odbc-spark
+            installer: simbaspark
+            version: '2.9.1'
+            os: Debian-64bit
+            build: '1001'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -32,15 +44,15 @@ jobs:
       with:
         # list of Docker images to use as base name for tags
         images: |
-          ${{ env.registry_name }}/${{ github.repository_owner }}/${{ env.image_name }}
+          ${{ env.registry_name }}/${{ github.repository_owner }}/${{ env.image_name }}${{ matrix.image_name }}
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=schedule
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
+          type=schedule,suffix=${{ matrix.image_name }}
+          type=ref,event=branch,suffix=${{ matrix.image_name }}
+          type=ref,event=pr,suffix=${{ matrix.image_name }}
+          type=semver,pattern={{version}},suffix=${{ matrix.image_name }}
+          type=semver,pattern={{major}}.{{minor}},suffix=${{ matrix.image_name }}
+          type=semver,pattern={{major}},suffix=${{ matrix.image_name }}
         flavor: |
           latest=true
 
@@ -49,14 +61,17 @@ jobs:
       with:
         context: ./
         file: ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/Dockerfile
-        # build-args: |
-        #     JFROG_USERNAME=${{ secrets.JFROG_CREDS_USR }}
-        #     JFROG_PWD=${{ secrets.JFROG_CREDS_PSW }}
+        build-args: |
+            RUNTIME_SDK_INSTALLER=${{ matrix.INSTALLER }}
+            VERSION=${{ matrix.VERSION }}
+            OS=${{ matrix.OS }}
+            BUILD=${{ matrix.BUILD }}
         tags: 
           ${{ steps.meta.outputs.tags }}
         push: true
 
   nuget: 
+    name: Publish NuGet Packages
     runs-on: ubuntu-latest
     strategy:
       matrix:
