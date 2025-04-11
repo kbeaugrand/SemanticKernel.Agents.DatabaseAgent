@@ -5,6 +5,7 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using Microsoft.SemanticKernel.Connectors.Sqlite;
+using SemanticKernel.Agents.DatabaseAgent.Internals;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
 
@@ -120,6 +121,8 @@ internal static class AgentKernelFactory
                 break;
             default: throw new ArgumentException($"Unknown storage type '{memorySettings.Get<MemorySettings>()!.Kind}'");
         }
+
+        _ = kernelBuilder.Services.AddSingleton<IPromptProvider, EmbeddedPromptProvider>();
 
         return kernelBuilder
                      .AddTextEmbeddingFromConfiguration(configuration, kernelSettings.Embedding)

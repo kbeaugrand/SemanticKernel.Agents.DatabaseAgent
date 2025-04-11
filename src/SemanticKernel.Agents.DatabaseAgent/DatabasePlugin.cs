@@ -27,6 +27,7 @@ internal sealed class DatabasePlugin
     private readonly DatabasePluginOptions _options;
 
     public DatabasePlugin(
+        IPromptProvider promptProvider,
         IOptions<DatabasePluginOptions> options,
         IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore,
         ILoggerFactory? loggerFactory = null)
@@ -36,7 +37,7 @@ internal sealed class DatabasePlugin
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._vectorStore = vectorStore;
 
-        this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery"), new OpenAIPromptExecutionSettings
+        this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), new OpenAIPromptExecutionSettings
         {
             MaxTokens = this._options.MaxTokens,
             Temperature = this._options.Temperature,

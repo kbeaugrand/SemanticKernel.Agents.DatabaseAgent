@@ -17,3 +17,4 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("2c8d417e-556b-4dd0-88bf-5ea65adc30f4")]
 [assembly: InternalsVisibleTo("SemanticKernel.Agents.DatabaseAgent.QualityAssurance")]
+[assembly: InternalsVisibleTo("SemanticKernel.Agents.DatabaseAgent.MCPServer")]
