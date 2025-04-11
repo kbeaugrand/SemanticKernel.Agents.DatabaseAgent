@@ -6,7 +6,7 @@ public sealed class DatabasePluginOptions
 
     public int? MaxTokens { get; set; } = 4096;
 
-    public double? Temperature { get; set; } = 0.1;
+    public double? Temperature { get; set; } = .1E-9;
 
-    public double? TopP { get; set; } = 0.1;
+    public double? TopP { get; set; } = .1E-9;
 }
