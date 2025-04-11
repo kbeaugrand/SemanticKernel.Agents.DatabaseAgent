@@ -14,13 +14,15 @@ Provide the query aligned with the syntax of the specified DBMS provider, ensuri
    - Use JOIN operations, filters, aggregations (e.g., GROUP BY), and conditions (e.g., WHERE, HAVING) as required by the query.
 
 3. **Verify Correctness:**
-   - Ensure to fully qualify the name with the correct schema and catalog.
    - Ensure the query is valid for the described schema, using the exact table and column names provided.
    - Prioritize clarity and optimization for the specified DBMS.
 
 ## Important
 
 You should only use SQL syntax that is compatible with the specified DBMS provider. If the provider is not specified, assume standard SQL syntax.
+Ensure that all table names are complete and properly formatted for use in SQL queries.
+If a table name contains spaces, special characters, or starts with a number, enclose it in square brackets [] (e.g., [Table Name]).
+Do not modify names that are already correctly bracketed. The formatting should be compatible with {{$providerName}}
  
 # Output Format 
 

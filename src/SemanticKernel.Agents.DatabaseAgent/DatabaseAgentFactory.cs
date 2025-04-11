@@ -19,8 +19,8 @@ public static class DatabaseAgentFactory
     private static PromptExecutionSettings promptExecutionSettings = new OpenAIPromptExecutionSettings
     {
         MaxTokens = 4096,
-        Temperature = 0.1,
-        TopP = 0.1,
+        Temperature = .1E-9,
+        TopP = .1E-9,
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
         ResponseFormat = "json_object"
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
@@ -201,12 +201,16 @@ public static class DatabaseAgentFactory
 
         await foreach (var item in tables)
         {
-            var tableNameResponse = await kernel.InvokePromptAsync("Extract the fully qualified table name from this: {{$item}}. \r\n" +
-                                                                    "DO NOT PROVIDE more than the fully qualified name.",
-                                    new KernelArguments
+            var tableNameResponse = await kernel.InvokePromptAsync("Extract the table name from this: \r\n{{$item}}. \r\n"  +
+                                                                   "DO NOT RETURN ANY EXPLAINATION, JUST RETURN THE TABLE NAME.\r\n" + 
+                                                                   "Ensure that all table names are complete and properly formatted for use in SQL queries. " +
+                                                                   "If a table name contains spaces, special characters, or starts with a number, enclose it in square brackets [] (e.g., [Table Name]). " +
+                                                                   "Do not modify names that are already correctly bracketed. The formatting should be compatible with {{$providerName}}.",
+                                    new KernelArguments(defaultKernelArguments)
                                     {
-                                            { "item", item }
-                                    }, cancellationToken: cancellationToken).ConfigureAwait(false);
+                                        { "item", item }
+                                    }, cancellationToken: cancellationToken)
+                                    .ConfigureAwait(false);
 
             var tableName = tableNameResponse.GetValue<string>();
 

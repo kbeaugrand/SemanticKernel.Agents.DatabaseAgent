@@ -33,9 +33,8 @@ internal static class QueryExecutor
                                         .ConfigureAwait(false);
 
             var dataTable = new DataTable();
-            dataTable.Load(reader);
 
-            return dataTable;
+            return await SafeLoadToDataTableAsync(reader, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -46,5 +45,35 @@ internal static class QueryExecutor
         {
             connection.Close();
         }
+    }
+
+    private static async Task<DataTable> SafeLoadToDataTableAsync(DbDataReader reader, CancellationToken cancellationToken)
+    {
+        var dataTable = new DataTable();
+
+        // Build columns using schema info
+        var schemaTable = await Task.Run(() => reader.GetSchemaTable(), cancellationToken);
+        if (schemaTable != null)
+        {
+            foreach (DataRow row in schemaTable.Rows)
+            {
+                var columnName = row["ColumnName"]?.ToString() ?? "Column";
+                if (!dataTable.Columns.Contains(columnName))
+                {
+                    // Always use object to prevent type mismatch
+                    dataTable.Columns.Add(new DataColumn(columnName, typeof(object)));
+                }
+            }
+        }
+
+        // Read data rows
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var values = new object[reader.FieldCount];
+            reader.GetValues(values);
+            dataTable.Rows.Add(values);
+        }
+
+        return dataTable;
     }
 }
