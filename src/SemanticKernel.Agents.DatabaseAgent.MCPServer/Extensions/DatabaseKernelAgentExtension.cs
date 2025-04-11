@@ -34,7 +34,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                     transport = new StdioServerTransport(agent.Name!);
                     break;
                 case TransportSettings.TransportType.Http:
-                    var port = int.TryParse(transportConfiguration.GetValue<string>("Port"), out var parsedPort) ? parsedPort : 8080;
+                    var port = transportConfiguration.GetValue<int>("Port", 8080);
                     transport = new HttpListenerSseServerTransport(options, port, loggerFactory!);
                     break;
                 default:
