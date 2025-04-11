@@ -2,9 +2,9 @@
 
 namespace SemanticKernel.Agents.DatabaseAgent.Internals;
 
-internal static class EmbeddedPromptProvider
+internal sealed class EmbeddedPromptProvider : IPromptProvider
 {
-    internal static string ReadPrompt(string promptName)
+    public string ReadPrompt(string promptName)
     {
         var resourceStream = Assembly.GetCallingAssembly()
                                              .GetManifestResourceStream($"{Assembly.GetCallingAssembly().GetName().Name}.Prompts.{promptName}.md");

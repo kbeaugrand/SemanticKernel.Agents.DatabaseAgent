@@ -25,6 +25,7 @@
     <EmbeddedResource Include="Prompts\AgentInstructionsGenerator.md" />
     <EmbeddedResource Include="Prompts\AgentNameGenerator.md" />
     <EmbeddedResource Include="Prompts\AgentDescriptionGenerator.md" />
+    <EmbeddedResource Include="Prompts\ExtractTableName.md" />
     <EmbeddedResource Include="Prompts\ExplainTable.md" />
     <EmbeddedResource Include="Prompts\WriteSQLQuery.md" />
   </ItemGroup>

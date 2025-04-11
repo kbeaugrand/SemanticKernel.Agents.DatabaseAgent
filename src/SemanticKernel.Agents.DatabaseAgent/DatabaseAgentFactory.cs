@@ -26,12 +26,6 @@ public static class DatabaseAgentFactory
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
     };
 
-    private static string _agentDescriptionPrompt = EmbeddedPromptProvider.ReadPrompt("AgentDescriptionGenerator");
-    private static string _agentInstructionsPrompt = EmbeddedPromptProvider.ReadPrompt("AgentInstructionsGenerator");
-    private static string _agentNamePrompt = EmbeddedPromptProvider.ReadPrompt("AgentNameGenerator");
-    private static string _tableDescriptionPrompt = EmbeddedPromptProvider.ReadPrompt("ExplainTable");
-    private static string _writeSQLQueryPrompt = EmbeddedPromptProvider.ReadPrompt("WriteSQLQuery");
-
     public static async Task<DatabaseKernelAgent> CreateAgentAsync(
             Kernel kernel,
             CancellationToken? cancellationToken = null)
@@ -40,7 +34,7 @@ public static class DatabaseAgentFactory
 
         if (vectorStore is null)
         {
-            throw new InvalidOperationException("The kernel does not have a vector store for table defintions.");
+            throw new InvalidOperationException("The kernel does not have a vector store for table definitions.");
         }
 
         var agentStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>();
@@ -81,21 +75,23 @@ public static class DatabaseAgentFactory
 
         var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken);
 
-        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(_agentDescriptionPrompt, promptExecutionSettings)
+        var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
+
+        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentDescriptionGenerator), promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "tableDefinitions", tableDescriptions }
                                         })
                                         .ConfigureAwait(false);
 
-        var agentName = await KernelFunctionFactory.CreateFromPrompt(_agentNamePrompt, promptExecutionSettings)
+        var agentName = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentNameGenerator), promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
                                         })
                                         .ConfigureAwait(false);
 
-        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(_agentInstructionsPrompt, promptExecutionSettings)
+        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentInstructionsGenerator), promptExecutionSettings)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
@@ -162,7 +158,8 @@ public static class DatabaseAgentFactory
     private static async IAsyncEnumerable<string> GetTablesAsync(Kernel kernel, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
+        var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings);
 
         var defaultKernelArguments = new KernelArguments
             {
@@ -190,8 +187,9 @@ public static class DatabaseAgentFactory
     private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(_writeSQLQueryPrompt, promptExecutionSettings);
-        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(_tableDescriptionPrompt, promptExecutionSettings);
+        var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings);
+        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), promptExecutionSettings);
         var defaultKernelArguments = new KernelArguments
             {
                 { "providerName", connection.GetProviderName() }
@@ -201,11 +199,7 @@ public static class DatabaseAgentFactory
 
         await foreach (var item in tables)
         {
-            var tableNameResponse = await kernel.InvokePromptAsync("Extract the table name from this: \r\n{{$item}}. \r\n"  +
-                                                                   "DO NOT RETURN ANY EXPLANATION, JUST RETURN THE TABLE NAME.\r\n" + 
-                                                                   "Ensure that all table names are complete and properly formatted for use in SQL queries. " +
-                                                                   "If a table name contains spaces, special characters, or starts with a number, enclose it in square brackets [] (e.g., [Table Name]). " +
-                                                                   "Do not modify names that are already correctly bracketed. The formatting should be compatible with {{$providerName}}.",
+            var tableNameResponse = await kernel.InvokePromptAsync(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
                                     new KernelArguments(defaultKernelArguments)
                                     {
                                         { "item", item }

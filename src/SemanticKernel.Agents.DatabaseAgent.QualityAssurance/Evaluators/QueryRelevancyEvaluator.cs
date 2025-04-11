@@ -15,7 +15,7 @@ public class QueryRelevancyEvaluator
     private readonly Kernel kernel;
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-    private KernelFunction ExtractQuestion => KernelFunctionFactory.CreateFromPrompt(EmbeddedPromptProvider.ReadPrompt("QuestionExtraction"), new OpenAIPromptExecutionSettings
+    private KernelFunction ExtractQuestion => KernelFunctionFactory.CreateFromPrompt(new EmbeddedPromptProvider().ReadPrompt("QuestionExtraction"), new OpenAIPromptExecutionSettings
     {
         Temperature = 9.99999993922529E-09,
         TopP = 9.99999993922529E-09,
