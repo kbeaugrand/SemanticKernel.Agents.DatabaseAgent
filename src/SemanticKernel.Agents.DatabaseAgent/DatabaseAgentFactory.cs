@@ -202,7 +202,7 @@ public static class DatabaseAgentFactory
         await foreach (var item in tables)
         {
             var tableNameResponse = await kernel.InvokePromptAsync("Extract the table name from this: \r\n{{$item}}. \r\n"  +
-                                                                   "DO NOT RETURN ANY EXPLAINATION, JUST RETURN THE TABLE NAME.\r\n" + 
+                                                                   "DO NOT RETURN ANY EXPLANATION, JUST RETURN THE TABLE NAME.\r\n" + 
                                                                    "Ensure that all table names are complete and properly formatted for use in SQL queries. " +
                                                                    "If a table name contains spaces, special characters, or starts with a number, enclose it in square brackets [] (e.g., [Table Name]). " +
                                                                    "Do not modify names that are already correctly bracketed. The formatting should be compatible with {{$providerName}}.",
