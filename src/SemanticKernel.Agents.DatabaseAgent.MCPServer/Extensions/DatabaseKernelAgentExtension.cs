@@ -1,22 +1,45 @@
-﻿using Azure;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using ModelContextProtocol.Protocol.Transport;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
+using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using System.Text.Json;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {
     internal static class DatabaseKernelAgentExtension
     {
-        public static IMcpServer ToMcpServer(this DatabaseKernelAgent agent)
+        public static IMcpServer ToMcpServer(this DatabaseKernelAgent agent, IConfiguration configuration, ILoggerFactory? loggerFactory = null)
         {
-            var transport = new StdioServerTransport(agent.Name!);
+            loggerFactory ??= NullLoggerFactory.Instance;
+
+            IServerTransport transport = null!;
 
             var options = GetMcpServerOptions(agent);
+
+            TransportSettings configuredTransport = new();
+            var transportConfiguration = configuration.GetSection("Agent:Transport");
+
+            if (transportConfiguration.Exists())
+                transportConfiguration.Bind(configuredTransport);
+
+            switch (configuredTransport.Kind)
+            {
+                case TransportSettings.TransportType.Stdio:
+                    transport = new StdioServerTransport(agent.Name!);
+                    break;
+                case TransportSettings.TransportType.Http:
+                    var port = transportConfiguration.GetValue<int>("Port", 8080);
+                    transport = new HttpListenerSseServerTransport(options, port, loggerFactory!);
+                    break;
+                default:
+                    throw new NotSupportedException($"Transport '{configuredTransport.Kind}' is not supported.");
+            }
 
             return McpServerFactory.Create(transport, options);
         }
