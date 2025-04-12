@@ -44,6 +44,6 @@ USER $APP_UID
 
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh ./entrypoint.sh
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
