@@ -5,10 +5,11 @@
 The database agent MCP server can be run as a Docker image. This allows you to run the server in a containerized environment, making it easy to deploy and manage to expose it SSE (Server-Sent Events) and HTTP endpoints. 
 
 To run the MCP server as a Docker image, you can use the following command:
+
 ```bash
 
 docker run -it --rm \
-  -p 8080:8080 \
+  -p 8080:5000 \
   -e DATABASE_PROVIDER=sqlite \
   -e DATABASE_CONNECTION_STRING="Data Source=northwind.db;Mode=ReadWrite" \
   -e MEMORY_KIND=Volatile \

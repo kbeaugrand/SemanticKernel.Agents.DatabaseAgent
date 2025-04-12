@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
 
@@ -14,17 +16,13 @@ internal class Program
                                                 .AddCommandLine(args)
                                                 .Build();
 
-        var kernel = AgentKernelFactory.ConfigureKernel(configuration, logging =>
-        {
-            logging.ClearProviders();
-        });
+        var loggerFactory = NullLoggerFactory.Instance;
 
-        var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
+        var kernel = AgentKernelFactory.ConfigureKernel(configuration, loggerFactory);
 
-        await using var mcpServer = agent.ToMcpServer(configuration);
+        var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel, loggerFactory);
 
-        await mcpServer.StartAsync();
-
-        await Task.Delay(Timeout.Infinite);
-    }    
+        await agent.ToMcpServer(configuration)
+                    .RunAsync();
+    }
 }

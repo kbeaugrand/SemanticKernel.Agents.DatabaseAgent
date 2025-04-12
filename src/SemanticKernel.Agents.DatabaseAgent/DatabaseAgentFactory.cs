@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -28,6 +29,7 @@ public static class DatabaseAgentFactory
 
     public static async Task<DatabaseKernelAgent> CreateAgentAsync(
             Kernel kernel,
+            ILoggerFactory loggingFactory,
             CancellationToken? cancellationToken = null)
     {
         var vectorStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>();
@@ -50,17 +52,20 @@ public static class DatabaseAgentFactory
         await agentStore.CreateCollectionIfNotExistsAsync()
                          .ConfigureAwait(false);
 
-        return await BuildAgentAsync(kernel, cancellationToken ?? CancellationToken.None)
+        return await BuildAgentAsync(kernel, loggingFactory, cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
 
-    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, CancellationToken cancellationToken)
+    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, ILoggerFactory loggingFactory, CancellationToken cancellationToken)
     {
         var agentKernel = kernel.Clone();
 
         var existingDefinition = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
                                             .GetAsync(Guid.Empty)
                                             .ConfigureAwait(false);
+
+        loggingFactory.CreateLogger<DatabaseKernelAgent>()
+            .LogInformation("Agent definition: {Definition}", existingDefinition);
 
         if (existingDefinition is not null)
         {
@@ -73,30 +78,42 @@ public static class DatabaseAgentFactory
             };
         }
 
+        loggingFactory.CreateLogger<DatabaseKernelAgent>()
+            .LogInformation("Creating a new agent definition.");
+
         var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken);
 
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
 
-        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentDescriptionGenerator), promptExecutionSettings)
+        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentDescriptionGenerator), promptExecutionSettings, functionName: AgentPromptConstants.AgentDescriptionGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "tableDefinitions", tableDescriptions }
                                         })
                                         .ConfigureAwait(false);
 
-        var agentName = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentNameGenerator), promptExecutionSettings)
+        loggingFactory.CreateLogger<DatabaseKernelAgent>()
+            .LogInformation("Agent description: {Description}", agentDescription.GetValue<string>()!);
+
+        var agentName = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentNameGenerator), promptExecutionSettings, functionName: AgentPromptConstants.AgentNameGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
                                         })
                                         .ConfigureAwait(false);
 
-        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentInstructionsGenerator), promptExecutionSettings)
+        loggingFactory.CreateLogger<DatabaseKernelAgent>()
+            .LogInformation("Agent name: {Name}", agentName.GetValue<string>()!);
+
+        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentInstructionsGenerator), promptExecutionSettings, functionName: AgentPromptConstants.AgentInstructionsGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
                                         })
                                         .ConfigureAwait(false);
+
+        loggingFactory.CreateLogger<DatabaseKernelAgent>()
+            .LogInformation("Agent instructions: {Instructions}", agentInstructions.GetValue<string>()!);
 
         var agentDefinition = new AgentDefinitionSnippet
         {
@@ -159,7 +176,7 @@ public static class DatabaseAgentFactory
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings);
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings, functionName: AgentPromptConstants.WriteSQLQuery);
 
         var defaultKernelArguments = new KernelArguments
             {
@@ -188,8 +205,8 @@ public static class DatabaseAgentFactory
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings);
-        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), promptExecutionSettings);
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings, functionName: AgentPromptConstants.WriteSQLQuery);
+        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), promptExecutionSettings, functionName: AgentPromptConstants.ExplainTable);
         var defaultKernelArguments = new KernelArguments
             {
                 { "providerName", connection.GetProviderName() }

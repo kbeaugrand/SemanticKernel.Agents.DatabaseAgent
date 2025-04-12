@@ -1,3 +1,3 @@
-﻿#!/bin/sh
+﻿#!/bin/bash
 
-exec /usr/bin/dotnet SemanticKernel.Agents.DatabaseAgent.MCPServer.dll "$@"
+/usr/bin/dotnet SemanticKernel.Agents.DatabaseAgent.MCPServer.dll

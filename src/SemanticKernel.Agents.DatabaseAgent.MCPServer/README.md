@@ -35,17 +35,11 @@ The following options are available
 You can configure the transport options for the agent by setting the following options:
 
 `--agent:Transport:Kind`  
-    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Http).  
+    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Sse).  
     - **Type**: `string`  
     - **Default**: `Stdio`  
     - **Example**: `--agent:Transport:Kind=Stdio`  
     
-`--agent:Transport:Port`  
-    - **Description**: The port number for the transport (when using Http transport).  
-    - **Type**: `int`  
-    - **Default**: `8080`  
-    - **Example**: `--agent:Transport:Port=8080`  
-
 #### Supported database providers
 
 The following database providers are supported:

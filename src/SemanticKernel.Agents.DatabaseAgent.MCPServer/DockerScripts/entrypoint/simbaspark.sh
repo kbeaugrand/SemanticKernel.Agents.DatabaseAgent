@@ -1,5 +1,5 @@
-﻿#!/bin/sh
+﻿#!/bin/bash
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/simba/spark/lib
+export LD_LIBRARY_PATH=/opt/simba/spark/lib/64:$LD_LIBRARY_PATH
 
-exec /usr/bin/dotnet SemanticKernel.Agents.DatabaseAgent.MCPServer.dll "$@"
+/usr/bin/dotnet SemanticKernel.Agents.DatabaseAgent.MCPServer.dll

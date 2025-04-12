@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Embeddings;
@@ -29,10 +30,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .AddEnvironmentVariables()
                     .Build();
 
-            this.kernel = AgentKernelFactory.ConfigureKernel(configuration, logging =>
-            {
-                logging.AddConsole();
-            });
+            this.kernel = AgentKernelFactory.ConfigureKernel(configuration, NullLoggerFactory.Instance);
         }
 
         [Test]
@@ -42,7 +40,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
 
             // Test
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel, NullLoggerFactory.Instance);
 
             // Assert
             Assert.That(agent, Is.Not.Null);
@@ -72,7 +70,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             // Arrange
             var evaluatorKernel = kernel.Clone();
 
-            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel);
+            var agent = await DatabaseAgentFactory.CreateAgentAsync(kernel, NullLoggerFactory.Instance);
             var embeddingTextGenerator = evaluatorKernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
             // Test

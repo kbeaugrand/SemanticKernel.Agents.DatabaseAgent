@@ -21,6 +21,10 @@ RUN dotnet publish "./SemanticKernel.Agents.DatabaseAgent.MCPServer.csproj" -c $
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 
+# Set the environment variable to Production
+ENV Agent__Transport__Kind=Http
+ENV Agent__Transport__Port=8080
+
 ARG RUNTIME_SDK_INSTALLER=void
 ARG VERSION=
 ARG OS=
@@ -28,7 +32,7 @@ ARG BUILD=
 
 # Install dependencies
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends wget unzip \
+	apt-get install -y --no-install-recommends wget unzip dos2unix \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/install/${RUNTIME_SDK_INSTALLER}.sh /tmp/
@@ -36,14 +40,13 @@ RUN chmod +x /tmp/${RUNTIME_SDK_INSTALLER}.sh && \
 	/tmp/${RUNTIME_SDK_INSTALLER}.sh ${VERSION} ${OS} ${BUILD} && \
 	rm -rf /tmp/${RUNTIME_SDK_INSTALLER}.sh
 
-# Set the environment variable to Production
-ENV Agent__Transport__Kind=Http
-ENV Agent__Transport__Port=8080
-
-USER $APP_UID
-
-WORKDIR /app
 COPY --from=publish /app/publish .
-COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh ./entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh /app/
+
+RUN mv /app/${RUNTIME_SDK_INSTALLER}.sh /app/entrypoint.sh && \
+    dos2unix /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+	
+USER $APP_UID
+WORKDIR /app
 ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
