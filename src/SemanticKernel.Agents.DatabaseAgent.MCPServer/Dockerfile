@@ -26,17 +26,12 @@ ARG VERSION=
 ARG OS=
 ARG BUILD=
 
-LABEL org.opencontainers.image.source=https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent
-LABEL org.opencontainers.image.description="The MCP Database Agent is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL)."
-LABEL org.opencontainers.image.licenses=MIT
-
-
 # Install dependencies
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends wget unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/${RUNTIME_SDK_INSTALLER}.sh /tmp/
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/install/${RUNTIME_SDK_INSTALLER}.sh /tmp/
 RUN chmod +x /tmp/${RUNTIME_SDK_INSTALLER}.sh && \
 	/tmp/${RUNTIME_SDK_INSTALLER}.sh ${VERSION} ${OS} ${BUILD} && \
 	rm -rf /tmp/${RUNTIME_SDK_INSTALLER}.sh
@@ -46,6 +41,9 @@ ENV Agent__Transport__Kind=Http
 ENV Agent__Transport__Port=8080
 
 USER $APP_UID
+
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SemanticKernel.Agents.DatabaseAgent.MCPServer.dll"]
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh ./entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
