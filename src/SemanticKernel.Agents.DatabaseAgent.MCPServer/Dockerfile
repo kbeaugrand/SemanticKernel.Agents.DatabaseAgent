@@ -21,10 +21,6 @@ RUN dotnet publish "./SemanticKernel.Agents.DatabaseAgent.MCPServer.csproj" -c $
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 
-# Set the environment variable to Production
-ENV Agent__Transport__Kind=Http
-ENV Agent__Transport__Port=8080
-
 ARG RUNTIME_SDK_INSTALLER=void
 ARG VERSION=
 ARG OS=
