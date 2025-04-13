@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 
@@ -6,9 +7,19 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {
     internal static class IKernelBuilderExtension
     {
-        internal static IKernelBuilder AddCompletionServiceFromConfiguration(this IKernelBuilder builder, IConfiguration configuration, string serviceName)
-        {
+        internal static IKernelBuilder AddCompletionServiceFromConfiguration(this IKernelBuilder builder, IConfiguration configuration, string serviceName, ILoggerFactory loggerFactory)
+        {           
+            var logger = loggerFactory.CreateLogger(nameof(IKernelBuilderExtension));
+
+            logger.LogInformation("Adding completion service from configuration: {serviceName}", serviceName);
+
             var service = configuration.GetSection($"services:{serviceName}");
+
+            if (string.IsNullOrEmpty(service["Type"]))
+            {
+                logger.LogError("Service type is not specified for {serviceName}", serviceName);
+                return builder;
+            }
 
             switch (service["Type"])
             {
@@ -29,9 +40,19 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable SKEXP0070 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
-        internal static IKernelBuilder AddTextEmbeddingFromConfiguration(this IKernelBuilder builder, IConfiguration configuration, string serviceName)
+        internal static IKernelBuilder AddTextEmbeddingFromConfiguration(this IKernelBuilder builder, IConfiguration configuration, string serviceName, ILoggerFactory loggerFactory)
         {
+            var logger = loggerFactory.CreateLogger(nameof(IKernelBuilderExtension));
+
+            logger.LogInformation("Adding text embedding service from configuration: {serviceName}", serviceName);
+
             var service = configuration.GetSection($"services:{serviceName}");
+
+            if (string.IsNullOrEmpty(service["Type"]))
+            {
+                logger.LogError("Service type is not specified for {serviceName}", serviceName);
+                return builder;
+            }
 
             switch (service["Type"])
             {

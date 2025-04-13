@@ -49,19 +49,13 @@ internal static class AgentKernelFactory
         };
     }
 
-    internal static Kernel ConfigureKernel(IConfiguration configuration, Action<ILoggingBuilder> logging)
+    internal static Kernel ConfigureKernel(IConfiguration configuration, ILoggerFactory loggerFactory)
     {
         var kernelSettings = configuration.GetSection("kernel").Get<KernelSettings>()!;
         var databaseSettings = configuration.GetSection("database").Get<DatabaseSettings>()!;
-        var memorySettings = configuration.GetSection("memory");
+        var memorySection = configuration.GetSection("memory");
 
         var kernelBuilder = Kernel.CreateBuilder();
-
-        kernelBuilder.Services
-            .AddLogging(opts =>
-            {
-                logging(opts);
-            });
 
         kernelBuilder.Services
                     .UseDatabaseAgentQualityAssurance(opts =>
@@ -77,14 +71,19 @@ internal static class AgentKernelFactory
                             .Bind(options);
         });
 
-        switch (memorySettings.Get<MemorySettings>()!.Kind)
+        var memorySettings = memorySection.Get<MemorySettings>();
+
+        loggerFactory.CreateLogger(nameof(AgentKernelFactory))
+                .LogInformation("Using memory kind {kind}", memorySettings!.Kind);
+
+        switch (memorySettings.Kind)
         {
             case MemorySettings.StorageType.Volatile:
                 kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent");
                 kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables");
                 break;
             case MemorySettings.StorageType.SQLite:
-                var sqliteSettings = memorySettings.Get<SQLiteMemorySettings>()!;
+                var sqliteSettings = memorySection.Get<SQLiteMemorySettings>()!;
                 kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent", 
                     sqliteSettings.ConnectionString,
                     options: new SqliteVectorStoreRecordCollectionOptions<AgentDefinitionSnippet>()
@@ -99,7 +98,7 @@ internal static class AgentKernelFactory
                     });
                 break;
             case MemorySettings.StorageType.Qdrant:
-                var qdrantSettings = memorySettings.Get<QdrantMemorySettings>()!;
+                var qdrantSettings = memorySection.Get<QdrantMemorySettings>()!;
                 kernelBuilder.AddQdrantVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
@@ -119,14 +118,14 @@ internal static class AgentKernelFactory
                                 VectorStoreRecordDefinition = GetVectorStoreRecordDefinition(qdrantSettings.Dimensions)
                             });
                 break;
-            default: throw new ArgumentException($"Unknown storage type '{memorySettings.Get<MemorySettings>()!.Kind}'");
+            default: throw new ArgumentException($"Unknown storage type '{memorySection.Get<MemorySettings>()!.Kind}'");
         }
 
         _ = kernelBuilder.Services.AddSingleton<IPromptProvider, EmbeddedPromptProvider>();
 
         return kernelBuilder
-                     .AddTextEmbeddingFromConfiguration(configuration, kernelSettings.Embedding)
-                     .AddCompletionServiceFromConfiguration(configuration, kernelSettings.Completion)
+                     .AddTextEmbeddingFromConfiguration(configuration, kernelSettings.Embedding, loggerFactory)
+                     .AddCompletionServiceFromConfiguration(configuration, kernelSettings.Completion, loggerFactory)
                      .Build();
     }
 }

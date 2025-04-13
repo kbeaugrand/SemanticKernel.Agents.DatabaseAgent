@@ -16,7 +16,7 @@ internal sealed class TransportSettings
     internal enum TransportType
     {
         Stdio,
-        Http
+        Sse
     }
 
     public TransportType Kind { get; set; } = TransportType.Stdio;

@@ -4,48 +4,18 @@ The Database Agent MCP Server is a server that listens for incoming connections 
 
 ## Installation
 
-To install the MCP server, you first should install the .NET Core SDK. 
-You can download the .NET Core SDK from the following link: https://dotnet.microsoft.com/download
+There are two ways to install the Database Agent MCP Server:
 
-After installing the .NET Core SDK, you can install the MCP server tool by running the following command:
+1. **As a .NET Core Tool**: You can install the Database Agent MCP Server as a .NET Core tool.
+> See the [DotnetTool.md](DotnetTool.md) file for more information on how to install and use the Database Agent MCP Server as a .NET Core tool.
 
-```bash
-dotnet tool install --global SemanticKernel.Agents.DatabaseAgent.MCPServer
-```
+1. **As a Docker Image**: You can also run the Database Agent MCP Server as a Docker image and expose it SSE (Server-Sent Events) and HTTP endpoints. To do this, you can use the following command:
+> See the [Docker.md](Docker.md) file for more information on how to run the Database Agent MCP Server as a Docker image.
 
-## Usage
-
-To start the MCP server, you can run the following command:
-
-```bash
-modelcontextprotocol-database-agent --*options*
-```
-
-### Example
-
-Here is an example of how to start the MCP server with a SQLite database and Azure OpenAI services:
-
-```bash
-modelcontextprotocol-database-agent \
-  --database:Provider=sqlite \
-  --database:ConnectionString="Data Source=northwind.db;Mode=ReadWrite" \
-  --memory:Kind=Volatile \
-  --kernel:Completion=gpt-4o-mini \
-  --kernel:Embedding=text-embedding-ada-002 \
-  --services:gpt-4o-mini:Type=AzureOpenAI \
-  --services:gpt-4o-mini:Endpoint=https://xxx.openai.azure.com/ \
-  --services:gpt-4o-mini:Auth=APIKey \
-  --services:gpt-4o-mini:APIKey=xxx \
-  --services:gpt-4o-mini:Deployment=gpt-4o-mini \
-  --services:text-embedding-ada-002:Type=AzureOpenAI \
-  --services:text-embedding-ada-002:Endpoint=https://xxx.openai.azure.com/ \
-  --services:text-embedding-ada-002:Auth=APIKey \
-  --services:text-embedding-ada-002:APIKey=xxx \
-  --services:text-embedding-ada-002:Deployment=text-embedding-ada-002
-```
 
 ### Options
 
+All options are passed as command line argument or environment variables. The command line options take precedence over the environment variables.
 The following options are available
 
 #### Global options
@@ -65,17 +35,11 @@ The following options are available
 You can configure the transport options for the agent by setting the following options:
 
 `--agent:Transport:Kind`  
-    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Http).  
+    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Sse).  
     - **Type**: `string`  
     - **Default**: `Stdio`  
     - **Example**: `--agent:Transport:Kind=Stdio`  
     
-`--agent:Transport:Port`  
-    - **Description**: The port number for the transport (when using Http transport).  
-    - **Type**: `int`  
-    - **Default**: `8080`  
-    - **Example**: `--agent:Transport:Port=8080`  
-
 #### Supported database providers
 
 The following database providers are supported:

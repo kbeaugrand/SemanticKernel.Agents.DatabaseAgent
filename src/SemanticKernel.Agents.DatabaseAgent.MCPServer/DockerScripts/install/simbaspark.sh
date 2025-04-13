@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+﻿#!/bin/bash
 
 # Parameters for version and OS
 VERSION=${1:-2.9.1}

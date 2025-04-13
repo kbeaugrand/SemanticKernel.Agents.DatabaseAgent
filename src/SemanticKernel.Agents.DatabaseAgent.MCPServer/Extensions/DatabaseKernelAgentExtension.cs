@@ -1,27 +1,23 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
-using ModelContextProtocol.Protocol.Transport;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using System.Text.Json;
+using Microsoft.AspNetCore.Builder;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {
     internal static class DatabaseKernelAgentExtension
     {
-        public static IMcpServer ToMcpServer(this DatabaseKernelAgent agent, IConfiguration configuration, ILoggerFactory? loggerFactory = null)
+        public static IHost ToMcpServer(this DatabaseKernelAgent agent, IConfiguration configuration)
         {
-            loggerFactory ??= NullLoggerFactory.Instance;
-
-            IServerTransport transport = null!;
-
-            var options = GetMcpServerOptions(agent);
-
             TransportSettings configuredTransport = new();
             var transportConfiguration = configuration.GetSection("Agent:Transport");
 
@@ -31,34 +27,50 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
             switch (configuredTransport.Kind)
             {
                 case TransportSettings.TransportType.Stdio:
-                    transport = new StdioServerTransport(agent.Name!);
-                    break;
-                case TransportSettings.TransportType.Http:
-                    var port = transportConfiguration.GetValue<int>("Port", 8080);
-                    transport = new HttpListenerSseServerTransport(options, port, loggerFactory!);
-                    break;
+                    var builder = Host.CreateEmptyApplicationBuilder(settings: null);
+
+                    var mcpServerBuilder = builder.Services
+                        .AddMcpServer(options => BindMcpServerOptions(agent, options));
+                    mcpServerBuilder.WithStdioServerTransport();
+
+                    return builder.Build();
+
+                case TransportSettings.TransportType.Sse:
+                    var webAppOptions = new WebApplicationOptions();
+                    configuration.Bind(webAppOptions);
+
+                    var webAppBuilder = WebApplication.CreateBuilder(webAppOptions);
+
+                    webAppBuilder.Logging
+                        .AddConsole();
+
+                    var app = webAppBuilder.Build();
+
+                    app.MapMcp(configureOptionsAsync: (context, options, CancellationToken) =>
+                    {
+                        BindMcpServerOptions(agent, options);
+                        return Task.CompletedTask;
+                    });
+
+                    return app;
                 default:
                     throw new NotSupportedException($"Transport '{configuredTransport.Kind}' is not supported.");
             }
-
-            return McpServerFactory.Create(transport, options);
         }
 
-        static McpServerOptions GetMcpServerOptions(DatabaseKernelAgent agent)
+        static void BindMcpServerOptions(DatabaseKernelAgent agent, McpServerOptions options)
         {
-            return new McpServerOptions
+            options.ServerInfo = new() { Name = agent.Name!, Version = "1.0.0" };
+            options.Capabilities = new()
             {
-                ServerInfo = new() { Name = agent.Name!, Version = "1.0.0" },
-                Capabilities = new()
+                Tools = new()
                 {
-                    Tools = new()
+                    ListToolsHandler = async (context, cancellationToken) =>
                     {
-                        ListToolsHandler = async (context, cancellationToken) =>
+                        return new ListToolsResult()
                         {
-                            return new ListToolsResult()
-                            {
-                                Tools = [
-                                    new Tool(){
+                            Tools = [
+                                new Tool(){
                                         Name = agent.Name!,
                                         Description = agent.Description,
                                         InputSchema = JsonSerializer.Deserialize<JsonElement>("""
@@ -74,38 +86,37 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                                             }
                                             """),
                                     }
-                                ]
+                            ]
 
-                            };
-                        },
-                        CallToolHandler = async (context, cancellationToken) =>
+                        };
+                    },
+                    CallToolHandler = async (context, cancellationToken) =>
+                    {
+                        if (!string.Equals(agent.Name, context.Params?.Name))
                         {
-                            if (!string.Equals(agent.Name, context.Params?.Name))
-                            {
-                                throw new McpServerException($"Unknown tool: '{context.Params?.Name}'");
-                            }
-
-                            if (context.Params?.Arguments?.TryGetValue("message", out var message) is not true)
-                            {
-                                throw new McpServerException("Missing required argument 'message'");
-                            }
-
-                            var responses = agent.InvokeAsync(new ChatMessageContent(AuthorRole.User, message.ToString()), thread: null)
-                                                    .ConfigureAwait(false);
-
-                            var callToolResponse = new CallToolResponse();
-
-                            await foreach (var item in responses)
-                            {
-                                callToolResponse.Content.Add(new()
-                                {
-                                    Type = "text",
-                                    Text = item.Message.Content!
-                                });
-                            }
-
-                            return callToolResponse;
+                            throw new InvalidOperationException($"Unknown tool: '{context.Params?.Name}'");
                         }
+
+                        if (context.Params?.Arguments?.TryGetValue("message", out var message) is not true)
+                        {
+                            throw new InvalidOperationException("Missing required argument 'message'");
+                        }
+
+                        var responses = agent.InvokeAsync(new ChatMessageContent(AuthorRole.User, message.ToString()), thread: null)
+                                                .ConfigureAwait(false);
+
+                        var callToolResponse = new CallToolResponse();
+
+                        await foreach (var item in responses)
+                        {
+                            callToolResponse.Content.Add(new()
+                            {
+                                Type = "text",
+                                Text = item.Message.Content!
+                            });
+                        }
+
+                        return callToolResponse;
                     }
                 }
             };

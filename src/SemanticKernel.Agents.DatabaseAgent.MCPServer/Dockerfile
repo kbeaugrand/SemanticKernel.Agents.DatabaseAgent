@@ -1,7 +1,7 @@
 # See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:8.0-noble AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble AS base
 WORKDIR /app
 
 # This stage is used to build the service project
@@ -21,31 +21,32 @@ RUN dotnet publish "./SemanticKernel.Agents.DatabaseAgent.MCPServer.csproj" -c $
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 
+# Set the environment variable to Production
+ENV Agent__Transport__Kind=Http
+ENV Agent__Transport__Port=8080
+
 ARG RUNTIME_SDK_INSTALLER=void
 ARG VERSION=
 ARG OS=
 ARG BUILD=
 
-LABEL org.opencontainers.image.source=https://github.com/kbeaugrand/SemanticKernel.Agents.DatabaseAgent
-LABEL org.opencontainers.image.description="The MCP Database Agent is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL)."
-LABEL org.opencontainers.image.licenses=MIT
-
-
 # Install dependencies
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends wget unzip \
+	apt-get install -y --no-install-recommends wget unzip dos2unix \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/${RUNTIME_SDK_INSTALLER}.sh /tmp/
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/install/${RUNTIME_SDK_INSTALLER}.sh /tmp/
 RUN chmod +x /tmp/${RUNTIME_SDK_INSTALLER}.sh && \
 	/tmp/${RUNTIME_SDK_INSTALLER}.sh ${VERSION} ${OS} ${BUILD} && \
 	rm -rf /tmp/${RUNTIME_SDK_INSTALLER}.sh
 
-# Set the environment variable to Production
-ENV Agent__Transport__Kind=Http
-ENV Agent__Transport__Port=8080
+COPY --from=publish /app/publish .
+COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh /app/
 
+RUN mv /app/${RUNTIME_SDK_INSTALLER}.sh /app/entrypoint.sh && \
+    dos2unix /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+	
 USER $APP_UID
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SemanticKernel.Agents.DatabaseAgent.MCPServer.dll"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
