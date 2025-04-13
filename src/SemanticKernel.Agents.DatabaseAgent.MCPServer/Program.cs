@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
+using ZstdSharp.Unsafe;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer;
 
@@ -16,7 +17,11 @@ internal class Program
                                                 .AddCommandLine(args)
                                                 .Build();
 
-        var loggerFactory = NullLoggerFactory.Instance;
+        var loggerFactory = LoggerFactory.Create(options =>
+        {
+            options.AddDebug();
+            options.SetMinimumLevel(LogLevel.Debug);
+        });
 
         var kernel = AgentKernelFactory.ConfigureKernel(configuration, loggerFactory);
 
@@ -24,5 +29,6 @@ internal class Program
 
         await agent.ToMcpServer(configuration)
                     .RunAsync();
+
     }
 }
