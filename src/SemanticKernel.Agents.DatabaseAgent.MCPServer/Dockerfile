@@ -37,12 +37,7 @@ RUN chmod +x /tmp/${RUNTIME_SDK_INSTALLER}.sh && \
 	rm -rf /tmp/${RUNTIME_SDK_INSTALLER}.sh
 
 COPY --from=publish /app/publish .
-#COPY ./src/SemanticKernel.Agents.DatabaseAgent.MCPServer/DockerScripts/entrypoint/${RUNTIME_SDK_INSTALLER}.sh /app/
-#
-#RUN mv /app/${RUNTIME_SDK_INSTALLER}.sh /app/entrypoint.sh && \
-    #dos2unix /app/entrypoint.sh && \
-    #chmod +x /app/entrypoint.sh
-	#
+
 USER $APP_UID
 WORKDIR /app
 ENTRYPOINT ["/usr/bin/dotnet", "SemanticKernel.Agents.DatabaseAgent.MCPServer.dll"]

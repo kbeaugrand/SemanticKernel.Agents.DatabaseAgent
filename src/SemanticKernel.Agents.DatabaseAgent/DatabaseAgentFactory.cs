@@ -184,17 +184,21 @@ public static class DatabaseAgentFactory
                 { "tablesDefinitions", "" }
             };
 
-        var tablesGenerator = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
+        using var reader = await Try(async (e) =>
+        {
+            var tablesGenerator = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
             {
                 { "prompt", "List all available tables" }
             })
             .ConfigureAwait(false);
 
-        var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
+            var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
 
-        using var reader = await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
+           return await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
                                         .ConfigureAwait(false);
-
+        }, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        
         foreach (DataRow row in reader!.Rows)
         {
             yield return MarkdownRenderer.Render(row);
@@ -216,14 +220,18 @@ public static class DatabaseAgentFactory
 
         await foreach (var item in tables)
         {
-            var tableNameResponse = await kernel.InvokePromptAsync(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
+            var tableName = await Try(async (e) =>
+             {
+                 var tableNameResponse = await kernel.InvokePromptAsync(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
                                     new KernelArguments(defaultKernelArguments)
                                     {
                                         { "item", item }
                                     }, cancellationToken: cancellationToken)
                                     .ConfigureAwait(false);
 
-            var tableName = tableNameResponse.GetValue<string>();
+                 return tableNameResponse.GetValue<string>();
+             }, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
             var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
                                                     .VectorizedSearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
@@ -240,38 +248,80 @@ public static class DatabaseAgentFactory
                 continue;
             }
 
-            var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
+            var tableStructureResponse = await Try(async (e) =>
+            {
+                var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
                     { "prompt", $"Show the current structure of '{tableName}'" }
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
-            var tableStructureResponse = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
+                return JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
+            }, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
             var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableStructureResponse.Query, null, cancellationToken)
                                             .ConfigureAwait(false));
 
-            var extract = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
+            var tableDataStructure = await Try(async (e) =>
+            {
+                var extract = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
                     { "prompt", $"Get the first 5 rows for '{tableName}'" }
                 }, cancellationToken)
                     .ConfigureAwait(false);
 
-            var tableDataStructure = JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!)!;
+                return JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!)!;
+            }, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
             var tableExtract = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableDataStructure.Query, null, cancellationToken)
                                             .ConfigureAwait(false));
 
-            var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
+            var tableExplain = await Try(async (e) =>
+            {
+                var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
                                     {
-                                        { "tableDefinition", definition },
+                                        { "tableDefinition", tableDefinition },
                                         { "tableDataExtract", tableExtract }
                                     })
-                                    .ConfigureAwait(false);
+                                  .ConfigureAwait(false);
 
-            var tableExplain = JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!;
+                return JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!;
+            }, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
 
             yield return (tableName, tableDefinition, tableExplain.Description, tableExtract)!;
         }
+    }
+
+    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 3, CancellationToken? cancellationToken = null)
+    {
+        var token = cancellationToken ?? CancellationToken.None;
+
+        Exception? lastException = null;
+
+        for (int i = 0; i < count; i++)
+        {
+            try
+            {
+                return await func(lastException)
+                            .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                if (i == count - 1)
+                {
+                    throw;
+                }
+
+                lastException = ex;
+
+                await Task.Delay(200, token)
+                            .ConfigureAwait(false);
+            }
+        }
+        throw new InvalidOperationException("Failed to execute the function.");
+
     }
 }
