@@ -30,8 +30,17 @@ rm -rf docs
 
 # Install dependencies
 apt-get update && \
-	apt-get install -y --no-install-recommends libsasl2-2 libsasl2-modules-gssapi-mit libodbc2 \
+	apt-get install -y --no-install-recommends libsasl2-2 libsasl2-modules-gssapi-mit libodbc2 unixodbc \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install the package from deb file
 dpkg -i /opt/sparkodbc/*.deb
+
+# Set environment variables for ODBC configuration
+export ODBCINI=/etc/odbc.ini
+
+# Configure the Simba Spark ODBC driver in the odbcinst.ini
+echo "[Simba Spark ODBC Driver]" > /etc/odbcinst.ini
+echo "Description=Simba Spark ODBC Driver" >> /etc/odbcinst.ini
+echo "Driver=/opt/simba/spark/lib/64/libsparkodbc_sb64.so" >> /etc/odbcinst.ini
+echo "UsageCount=1" >> /etc/odbcinst.ini
