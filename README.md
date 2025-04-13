@@ -66,18 +66,18 @@ docker run -it --rm \
   -e DATABASE_PROVIDER=sqlite \
   -e DATABASE_CONNECTION_STRING="Data Source=northwind.db;Mode=ReadWrite" \
   -e MEMORY_KIND=Volatile \
-  -e KERNEL_COMPLETION=gpt-4o-mini \
-  -e KERNEL_EMBEDDING=text-embedding-ada-002 \
-  -e SERVICES_GPT_4O_MINI_TYPE=AzureOpenAI \
-  -e SERVICES_GPT_4O_MINI_ENDPOINT=https://xxx.openai.azure.com/ \
-  -e SERVICES_GPT_4O_MINI_AUTH=APIKey \
-  -e SERVICES_GPT_4O_MINI_API_KEY=xxx \
-  -e SERVICES_GPT_4O_MINI_DEPLOYMENT=gpt-4o-mini \
-  -e SERVICES_TEXT_EMBEDDING_ADA_002_TYPE=AzureOpenAI \
-  -e SERVICES_TEXT_EMBEDDING_ADA_002_ENDPOINT=https://xxx.openai.azure.com/ \
-  -e SERVICES_TEXT_EMBEDDING_ADA_002_AUTH=APIKey \
-  -e SERVICES_TEXT_EMBEDDING_ADA_002_API_KEY=xxx \
-  -e SERVICES_TEXT_EMBEDDING_ADA_002_DEPLOYMENT=text-embedding-ada-002 \
+  -e KERNEL_COMPLETION=gpt4omini \
+  -e KERNEL_EMBEDDING=textembeddingada002 \
+  -e SERVICES_GPT4OMINI_TYPE=AzureOpenAI \
+  -e SERVICES_GPT4OMINI_ENDPOINT=https://xxx.openai.azure.com/ \
+  -e SERVICES_GPT4OMINI_AUTH=APIKey \
+  -e SERVICES_GPT4OMINI_API_KEY=xxx \
+  -e SERVICES_GPT4OMINI_DEPLOYMENT=gpt-4o-mini \
+  -e SERVICES_TEXTEMBEDDINGADA002_TYPE=AzureOpenAI \
+  -e SERVICES_TEXTEMBEDDINGADA002_ENDPOINT=https://xxx.openai.azure.com/ \
+  -e SERVICES_TEXTEMBEDDINGADA002_AUTH=APIKey \
+  -e SERVICES_TEXTEMBEDDINGADA002_API_KEY=xxx \
+  -e SERVICES_TEXTEMBEDDINGADA002_DEPLOYMENT=text-embedding-ada-002 \
   ghcr.io/kbeaugrand/database-mcp-server
 ```
 
