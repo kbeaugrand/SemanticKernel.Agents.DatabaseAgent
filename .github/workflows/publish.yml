@@ -28,6 +28,8 @@ jobs:
             version: '2.9.1'
             os: Debian-64bit
             build: '1001'
+            image_flavor: |
+                latest=false
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
