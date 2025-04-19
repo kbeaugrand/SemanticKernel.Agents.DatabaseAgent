@@ -31,6 +31,11 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .Build();
 
             this.kernel = AgentKernelFactory.ConfigureKernel(configuration, NullLoggerFactory.Instance);
+
+            foreach (var kvp in configuration.AsEnumerable())
+            {
+                Console.WriteLine($"{kvp.Key} = {kvp.Value}");
+            }
         }
 
         [Test]
