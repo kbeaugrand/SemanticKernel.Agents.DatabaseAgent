@@ -25,3 +25,19 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
       working-directory: ./src/
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+      working-directory: ./src/
+      env: 
+        DATABASE__CONNECTIONSTRING: ${{ secrets.DATABASE__CONNECTIONSTRING }} 
+        SERVICES__GPT4OMINI__TYPE: AzureOpenAI
+        SERVICES__GPT4OMINI__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
+        SERVICES__GPT4OMINI__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
+        SERVICES__GPT4OMINI__DEPLOYMENTNAME: gpt-4o-mini
+        SERVICES__TEXTEMBEDDINGADA002___TYPE: AzureOpenAI
+        SERVICES__TEXTEMBEDDINGADA002___ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
+        SERVICES__TEXTEMBEDDINGADA002___APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
+        SERVICES__TEXTEMBEDDINGADA002___DEPLOYMENTNAME: text-embedding-ada-002
+        KERNEL__COMPLETION: GPT4OMINI
+        KERNEL__EMBEDDING: TEXTEMBEDDINGADA002
+        MEMORY__KIND: volatile

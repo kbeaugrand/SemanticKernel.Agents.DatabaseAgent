@@ -1,0 +1,21 @@
+{
+  "profiles": {
+    "SemanticKernel.Agents.DatabaseAgent.Tests": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DATABASE__CONNECTIONSTRING": "$",
+        "SERVICES__GPT4OMINI__TYPE": "AzureOpenAI",
+        "SERVICES__GPT4OMINI__ENDPOINT": "$",
+        "SERVICES__GPT4OMINI__APIKEY": "$",
+        "SERVICES__GPT4OMINI__DEPLOYMENTNAME": "gpt-4o-mini",
+        "SERVICES__TEXTEMBEDDINGADA002___TYPE": "AzureOpenAI",
+        "SERVICES__TEXTEMBEDDINGADA002___ENDPOINT": "$",
+        "SERVICES__TEXTEMBEDDINGADA002___APIKEY": "$",
+        "SERVICES__TEXTEMBEDDINGADA002___DEPLOYMENTNAME": "text-embedding-ada-002",
+        "KERNEL__COMPLETION": "GPT4OMINI",
+        "KERNEL__EMBEDDING": "TEXTEMBEDDINGADA002",
+        "MEMORY__KIND": "volatile"
+      }
+    }
+  }
+}
