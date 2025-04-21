@@ -81,10 +81,20 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             await foreach (var response in responses)
             {
                 Assert.That(response.Message, Is.Not.Null);
-                var embeddings = await embeddingTextGenerator.GenerateEmbeddingsAsync([expectedAnswer, response.Message.Content!])
-                                                .ConfigureAwait(false);
 
-                var score = TensorPrimitives.CosineSimilarity(embeddings[0].Span, embeddings[1].Span);
+                var evaluation = await kernel.InvokePromptAsync($"""
+                    You are an evaluator. Your task is to evaluate the similarity between two answers.
+                    The first answer is the expected answer, and the second answer is the actual answer.
+
+                    First sentence: {expectedAnswer}
+                    Second sentence: {response.Message.Content}
+
+                    Evaluate the similarity between the two sentences and return a score between 0 and 1.
+                    Return the score without any explanation or additional text.
+                    """)
+                        .ConfigureAwait(false);
+
+                var score = float.Parse(evaluation.GetValue<string>()!);
 
                 Console.WriteLine($"Score: {score}");
                 Console.WriteLine($"Answer: {response.Message}");
