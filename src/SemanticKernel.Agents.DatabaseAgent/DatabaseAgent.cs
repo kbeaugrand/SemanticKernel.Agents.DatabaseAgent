@@ -11,7 +11,7 @@ using Validation;
 
 namespace Microsoft.SemanticKernel.Agents;
 
-public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
+public sealed class DatabaseKernelAgent : ChatHistoryAgent
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="DatabaseKernelAgent"/> class.
@@ -189,7 +189,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         CancellationToken cancellationToken)
     {
         ChatHistory chat = new ChatHistory();
-        string? instructions = await this.FormatInstructionsAsync(kernel, arguments, cancellationToken).ConfigureAwait(false);
+        string? instructions = await this.RenderInstructionsAsync(kernel, arguments, cancellationToken).ConfigureAwait(false);
 
         if (!string.IsNullOrWhiteSpace(instructions))
         {
@@ -216,7 +216,6 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         kernel ??= this.Kernel;
-        arguments = this.MergeArguments(arguments);
 
         var plugin = kernel.CreatePluginFromType<DatabasePlugin>();
 
@@ -273,7 +272,6 @@ public sealed class DatabaseKernelAgent : ChatHistoryKernelAgent
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         kernel ??= this.Kernel;
-        arguments = this.MergeArguments(arguments);
 
         (IChatCompletionService chatCompletionService, PromptExecutionSettings? executionSettings) = GetChatCompletionService(kernel, arguments);
 
