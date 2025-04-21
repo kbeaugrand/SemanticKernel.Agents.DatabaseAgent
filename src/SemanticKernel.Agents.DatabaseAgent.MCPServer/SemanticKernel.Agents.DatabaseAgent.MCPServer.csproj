@@ -34,10 +34,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.3" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.44.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.44.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.44.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.44.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.47.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.47.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.47.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.47.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.8" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.1.0-preview.8" />
