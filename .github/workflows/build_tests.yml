@@ -12,7 +12,17 @@ on:
 jobs:
   build: 
     runs-on: ubuntu-latest
-    
+    strategy:
+      matrix:
+        tag: ['AzureOpenAI', 'Ollama']
+        include:
+          - tag: AzureOpenAI
+            completion: GPT4OMINI
+            embedding: TEXTEMBEDDINGADA002
+          - tag: Ollama
+            completion: QWEN25CODER32B
+            embedding: NOMICEMBEDTEXT
+  
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
@@ -38,6 +48,12 @@ jobs:
         SERVICES__TEXTEMBEDDINGADA002__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
         SERVICES__TEXTEMBEDDINGADA002__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
         SERVICES__TEXTEMBEDDINGADA002__DEPLOYMENT: text-embedding-ada-002
-        KERNEL__COMPLETION: GPT4OMINI
-        KERNEL__EMBEDDING: TEXTEMBEDDINGADA002
+        SERVICES__QWEN25CODER32B__TYPE: Ollama
+        SERVICES__QWEN25CODER32B__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+        SERVICES__QWEN25CODER32B__MODELID: qwen2.5-coder:32b
+        SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
+        SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+        SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:latest
+        KERNEL__COMPLETION: ${{ matrix.COMPLETION }}
+        KERNEL__EMBEDDING: ${{ matrix.EMBEDDING }}
         MEMORY__KIND: volatile
