@@ -3,8 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.InMemory;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
-using Microsoft.SemanticKernel.Connectors.Sqlite;
+using Microsoft.SemanticKernel.Connectors.SqliteVec;
+using Qdrant.Client;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions;
@@ -13,37 +15,37 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
 
 internal static class AgentKernelFactory
 {
-    private static VectorStoreRecordDefinition GetVectorStoreRecordDefinition(int vectorDimensions = 1536)
+    private static VectorStoreCollectionDefinition GetVectorStoreRecordDefinition(int vectorDimensions = 1536)
     {
         return new()
         {
-            Properties = new List<VectorStoreRecordProperty>
+            Properties = new List<VectorStoreProperty>
             {
-                new VectorStoreRecordDataProperty(nameof(TableDefinitionSnippet.TableName), typeof(string)),
-                new VectorStoreRecordKeyProperty(nameof(TableDefinitionSnippet.Key), typeof(Guid)),
-                new VectorStoreRecordDataProperty(nameof(TableDefinitionSnippet.Definition), typeof(string)),
-                new VectorStoreRecordDataProperty(nameof(TableDefinitionSnippet.Description), typeof(string)),
-                new VectorStoreRecordVectorProperty(nameof(TableDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>)) 
+                new VectorStoreDataProperty(nameof(TableDefinitionSnippet.TableName), typeof(string)){ IsIndexed = true },
+                new VectorStoreKeyProperty(nameof(TableDefinitionSnippet.Key), typeof(Guid)),
+                new VectorStoreDataProperty(nameof(TableDefinitionSnippet.Definition), typeof(string)),
+                new VectorStoreDataProperty(nameof(TableDefinitionSnippet.Description), typeof(string)){ IsFullTextIndexed  = true },
+                new VectorStoreVectorProperty(nameof(TableDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>), dimensions: vectorDimensions)
                 {
-                    Dimensions = vectorDimensions
+                    DistanceFunction = DistanceFunction.CosineDistance
                 }
             }
         };
     }
 
-    private static VectorStoreRecordDefinition GetAgentStoreRecordDefinition(int vectorDimensions = 1536)
+    private static VectorStoreCollectionDefinition GetAgentStoreRecordDefinition(int vectorDimensions = 1536)
     {
         return new()
         {
-            Properties = new List<VectorStoreRecordProperty>
+            Properties = new List<VectorStoreProperty>
             {
-                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.AgentName), typeof(string)),
-                new VectorStoreRecordKeyProperty(nameof(AgentDefinitionSnippet.Key), typeof(Guid)),
-                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.Description), typeof(string)),
-                new VectorStoreRecordDataProperty(nameof(AgentDefinitionSnippet.Instructions), typeof(string)),
-                new VectorStoreRecordVectorProperty(nameof(AgentDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>))
+                new VectorStoreDataProperty(nameof(AgentDefinitionSnippet.AgentName), typeof(string)){ IsIndexed = true },
+                new VectorStoreKeyProperty(nameof(AgentDefinitionSnippet.Key), typeof(Guid)),
+                new VectorStoreDataProperty(nameof(AgentDefinitionSnippet.Description), typeof(string)){ IsFullTextIndexed  = true },
+                new VectorStoreDataProperty(nameof(AgentDefinitionSnippet.Instructions), typeof(string)),
+                new VectorStoreVectorProperty(nameof(AgentDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>), dimensions: vectorDimensions)
                 {
-                    Dimensions = vectorDimensions
+                    DistanceFunction = DistanceFunction.CosineDistance
                 }
             }
         };
@@ -79,43 +81,50 @@ internal static class AgentKernelFactory
         switch (memorySettings.Kind)
         {
             case MemorySettings.StorageType.Volatile:
-                kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent");
-                kernelBuilder.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables");
+                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent", options: new()
+                {
+                    Definition = GetAgentStoreRecordDefinition()
+                });
+                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables", options: new()
+                {
+                    Definition = GetVectorStoreRecordDefinition()
+                });
                 break;
             case MemorySettings.StorageType.SQLite:
                 var sqliteSettings = memorySection.Get<SQLiteMemorySettings>()!;
-                kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent", 
+                kernelBuilder.Services.AddSqliteCollection<Guid, AgentDefinitionSnippet>("agent",
                     sqliteSettings.ConnectionString,
-                    options: new SqliteVectorStoreRecordCollectionOptions<AgentDefinitionSnippet>()
+                    options: new SqliteCollectionOptions()
                     {
-                        VectorStoreRecordDefinition = GetAgentStoreRecordDefinition(sqliteSettings.Dimensions)
+                        Definition = GetAgentStoreRecordDefinition(sqliteSettings.Dimensions)
                     });
-                kernelBuilder.Services.AddSqliteVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables",
+                kernelBuilder.Services.AddSqliteCollection<Guid, TableDefinitionSnippet>("tables",
                     sqliteSettings.ConnectionString,
-                    options: new SqliteVectorStoreRecordCollectionOptions<TableDefinitionSnippet>()
+                    options: new SqliteCollectionOptions()
                     {
-                        VectorStoreRecordDefinition = GetVectorStoreRecordDefinition(sqliteSettings.Dimensions)
+                        Definition = GetVectorStoreRecordDefinition(sqliteSettings.Dimensions)
                     });
                 break;
             case MemorySettings.StorageType.Qdrant:
                 var qdrantSettings = memorySection.Get<QdrantMemorySettings>()!;
-                kernelBuilder.AddQdrantVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent",
+
+                kernelBuilder.Services.AddQdrantCollection<Guid, AgentDefinitionSnippet>("agent",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
                             qdrantSettings.Https,
                             qdrantSettings.APIKey,
-                            new QdrantVectorStoreRecordCollectionOptions<AgentDefinitionSnippet>
+                            new QdrantCollectionOptions
                             {
-                                VectorStoreRecordDefinition = GetAgentStoreRecordDefinition(qdrantSettings.Dimensions)
+                                Definition = GetAgentStoreRecordDefinition(qdrantSettings.Dimensions)
                             });
-                kernelBuilder.AddQdrantVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables",
+                kernelBuilder.Services.AddQdrantCollection<Guid, TableDefinitionSnippet>("tables",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
                             qdrantSettings.Https,
                             qdrantSettings.APIKey,
-                            new QdrantVectorStoreRecordCollectionOptions<TableDefinitionSnippet>
+                            new QdrantCollectionOptions
                             {
-                                VectorStoreRecordDefinition = GetVectorStoreRecordDefinition(qdrantSettings.Dimensions)
+                                Definition = GetVectorStoreRecordDefinition(qdrantSettings.Dimensions)
                             });
                 break;
             default: throw new ArgumentException($"Unknown storage type '{memorySection.Get<MemorySettings>()!.Kind}'");

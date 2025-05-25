@@ -22,14 +22,14 @@ internal sealed class DatabasePlugin
 
     private readonly ILoggerFactory? _loggerFactory;
 
-    private readonly IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> _vectorStore;
+    private readonly IVectorSearchable<TableDefinitionSnippet> _vectorStore;
 
     private readonly DatabasePluginOptions _options;
 
     public DatabasePlugin(
         IPromptProvider promptProvider,
         IOptions<DatabasePluginOptions> options,
-        IVectorStoreRecordCollection<Guid, TableDefinitionSnippet> vectorStore,
+        IVectorSearchable<TableDefinitionSnippet> vectorStore,
         ILoggerFactory? loggerFactory = null)
     {
         this._options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -67,15 +67,12 @@ internal sealed class DatabasePlugin
             var embeddings = await textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
                                                                         .ConfigureAwait(false);
 
-            var relatedTables = await this._vectorStore.VectorizedSearchAsync(embeddings, options: new()
-            {
-                Top = this._options.TopK
-            }, cancellationToken: cancellationToken)
+            var relatedTables = this._vectorStore.SearchAsync(embeddings, top: this._options.TopK, cancellationToken: cancellationToken)
                    .ConfigureAwait(false);
 
             var tableDefinitionsSb = new StringBuilder();
 
-            await foreach (var relatedTable in relatedTables.Results)
+            await foreach (var relatedTable in relatedTables)
             {
                 tableDefinitionsSb.AppendLine($"## {relatedTable.Record.TableName}");
                 tableDefinitionsSb.AppendLine(relatedTable.Record.Definition);

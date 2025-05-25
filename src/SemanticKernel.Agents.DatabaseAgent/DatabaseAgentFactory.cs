@@ -33,24 +33,24 @@ public static class DatabaseAgentFactory
             ILoggerFactory loggingFactory,
             CancellationToken? cancellationToken = null)
     {
-        var vectorStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>();
+        var vectorStore = kernel.Services.GetService<VectorStoreCollection<Guid, TableDefinitionSnippet>>();
 
         if (vectorStore is null)
         {
             throw new InvalidOperationException("The kernel does not have a vector store for table definitions.");
         }
 
-        var agentStore = kernel.Services.GetService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>();
+        var agentStore = kernel.Services.GetService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>();
 
         if (agentStore is null)
         {
             throw new InvalidOperationException("The kernel does not have a vector store for agent.");
         }
 
-        await vectorStore.CreateCollectionIfNotExistsAsync()
+        await vectorStore.EnsureCollectionExistsAsync()
                          .ConfigureAwait(false);
 
-        await agentStore.CreateCollectionIfNotExistsAsync()
+        await agentStore.EnsureCollectionExistsAsync()
                          .ConfigureAwait(false);
 
         return await BuildAgentAsync(kernel, loggingFactory, cancellationToken ?? CancellationToken.None)
@@ -61,7 +61,7 @@ public static class DatabaseAgentFactory
     {
         var agentKernel = kernel.Clone();
 
-        var existingDefinition = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
+        var existingDefinition = await kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
                                             .GetAsync(Guid.Empty)
                                             .ConfigureAwait(false);
 
@@ -128,7 +128,7 @@ public static class DatabaseAgentFactory
                                                         .GenerateEmbeddingAsync(agentDefinition.Description)
                                                         .ConfigureAwait(false);
 
-        _ = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>>()
+        await kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
                         .UpsertAsync(agentDefinition, cancellationToken)
                         .ConfigureAwait(false);
 
@@ -154,7 +154,7 @@ public static class DatabaseAgentFactory
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
 
-            await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
+            await kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
                             .UpsertAsync(new TableDefinitionSnippet
                             {
                                 Key = Guid.NewGuid(),
@@ -240,14 +240,22 @@ public static class DatabaseAgentFactory
 
             logger.LogDebug("Extracted table name: {TableName}", tableName);
 
-            var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
-                                                    .VectorizedSearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
+            var existingRecordSearch = kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
+                                                    .SearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
                                                         .GenerateEmbeddingAsync(item)
-                                                        .ConfigureAwait(false))
+                                                        .ConfigureAwait(false), top: 1)
                                                     .ConfigureAwait(false);
 
-            var existingRecord = await existingRecordSearch.Results.FirstOrDefaultAsync(c => c.Record.TableName == tableName)
-                                                .ConfigureAwait(false);
+            VectorSearchResult<TableDefinitionSnippet> existingRecord = null!;
+
+            await foreach (var searchResult in existingRecordSearch)
+            {
+                if (searchResult.Record.TableName == tableName)
+                {
+                    existingRecord = searchResult;
+                    break;
+                }
+            }
 
             if (existingRecord is not null)
             {
