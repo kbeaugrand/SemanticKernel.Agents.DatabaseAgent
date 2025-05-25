@@ -20,7 +20,7 @@ jobs:
             completion: GPT4OMINI
             embedding: TEXTEMBEDDINGADA002
           - tag: Ollama
-            completion: QWEN25CODER
+            completion: DEVSTRAL
             embedding: NOMICEMBEDTEXT
   
     steps:
@@ -51,6 +51,9 @@ jobs:
         SERVICES__QWEN25CODER__TYPE: Ollama
         SERVICES__QWEN25CODER__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
         SERVICES__QWEN25CODER__MODELID: qwen2.5-coder:latest
+        SERVICES__DEVSTRAL__TYPE: Ollama
+        SERVICES__DEVSTRAL__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+        SERVICES__DEVSTRAL__MODELID: devstral:24b
         SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
         SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
         SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:latest
