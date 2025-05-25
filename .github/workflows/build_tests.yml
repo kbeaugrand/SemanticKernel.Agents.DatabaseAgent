@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag: ['AzureOpenAI', 'Ollama']
+        tag: ['AzureOpenAI', 'OllamaPhi4', 'OllamaDevstral']
         include:
           - tag: AzureOpenAI
             completion: GPT4OMINI
