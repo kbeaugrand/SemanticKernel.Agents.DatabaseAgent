@@ -314,7 +314,7 @@ public static class DatabaseAgentFactory
         }
     }
 
-    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 1, ILoggerFactory loggerFactory = null!, CancellationToken? cancellationToken = null)
+    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 3, ILoggerFactory loggerFactory = null!, CancellationToken? cancellationToken = null)
     {
         var token = cancellationToken ?? CancellationToken.None;
 

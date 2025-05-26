@@ -20,7 +20,6 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 | qwen2-5-coder   |
 | qwen3-8b        |
 | llama3-3        |
-| llama4          |
 
 ## Getting Started
 

@@ -60,11 +60,11 @@ jobs:
       completion: LLAMA33
       embedding: NOMICEMBEDTEXT
 
-  llama4:
-    needs: llama3-3
-    uses: ./.github/workflows/execute_test_for_model.yml
-    secrets: inherit 
-    with:
-      tag: llama4
-      completion: LLAMA4
-      embedding: NOMICEMBEDTEXT
+  # llama4:
+  #   needs: llama3-3
+  #   uses: ./.github/workflows/execute_test_for_model.yml
+  #   secrets: inherit 
+  #   with:
+  #     tag: llama4
+  #     completion: LLAMA4
+  #     embedding: NOMICEMBEDTEXT
