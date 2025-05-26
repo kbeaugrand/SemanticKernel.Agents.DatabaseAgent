@@ -10,6 +10,18 @@
 The Database Agent for Semantic Kernel is a service that provides a database management system (DBMS) for the Semantic Kernel (NL2SQL). The Agent is responsible for managing the storage and retrieval of data from the Semantic Kernel. 
 This built on top of the [Microsoft's Semantic Kernel](https://github.com/microsoft/semantic-kernel) and Semantic Kernel Memory connectors to memorize database schema and relationships to provide a more efficient and accurate database management system.
 
+## Models Tested
+
+| Model Name      |
+|-----------------|
+| gpt-4o-mini     |
+| devstral        |
+| phi4            |
+| qwen2-5-coder   |
+| qwen3-8b        |
+| llama3-3        |
+| llama4          |
+
 ## Getting Started
 
 ### Prerequisites
