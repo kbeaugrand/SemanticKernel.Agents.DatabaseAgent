@@ -12,15 +12,15 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 
 ## Models Tested
 
-| Model Name      |
-|-----------------|
-| gpt-4o-mini     |
-| devstral        |
-| phi4            |
-| qwen2-5-coder   |
-| qwen3-8b        |
-| llama3-3        |
-| llama4:scout    |
+| Model Name      | NL 2 SQL  | Quality Insurance |
+|-----------------|:---------:|:----------------:|
+| gpt-4o-mini     | ✅        | ✅               |
+| devstral        | ✅        | ✅               |
+| phi4            | ✅        | ⚠️ (WIP)         |
+| qwen2-5-coder   | ✅        | ⚠️ (WIP)         |
+| qwen3-8b        | ⚠️ (WIP)  | ⚠️ (WIP)         |
+| llama3-3        | ✅        | ⚠️ (WIP)         |
+| llama4          | ✅        | ⚠️ (WIP)         |
 
 ## Getting Started
 
