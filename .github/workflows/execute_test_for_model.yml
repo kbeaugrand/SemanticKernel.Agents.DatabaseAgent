@@ -1,0 +1,78 @@
+name: .NET Test on LLM model
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      completion:
+        required: true
+        type: string
+      embedding:
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - run: dotnet restore
+        working-directory: ./src/
+      - run: dotnet build --no-restore
+        working-directory: ./src/
+      - run: dotnet test --no-build --verbosity normal
+        working-directory: ./src/
+        env:
+          DATABASE__CONNECTIONSTRING: ${{ secrets.DATABASE__CONNECTIONSTRING }}
+                    
+          KERNEL__COMPLETION: ${{ inputs.completion }}
+          KERNEL__EMBEDDING: ${{ inputs.embedding }}
+          MEMORY__KIND: volatile
+
+          ## Azure OpenAI Service
+          SERVICES__GPT4OMINI__TYPE: AzureOpenAI
+          SERVICES__GPT4OMINI__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
+          SERVICES__GPT4OMINI__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
+          SERVICES__GPT4OMINI__DEPLOYMENT: gpt-4o-mini
+          SERVICES__TEXTEMBEDDINGADA002__TYPE: AzureOpenAI
+          SERVICES__TEXTEMBEDDINGADA002__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
+          SERVICES__TEXTEMBEDDINGADA002__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
+          SERVICES__TEXTEMBEDDINGADA002__DEPLOYMENT: text-embedding-ada-002
+
+          ## Qwen Models via Ollama
+          SERVICES__QWEN25CODER__TYPE: Ollama
+          SERVICES__QWEN25CODER__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__QWEN25CODER__MODELID: qwen2.5-coder:latest
+          SERVICES__QWEN38B__TYPE: Ollama
+          SERVICES__QWEN38B__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__QWEN38B__MODELID: qwen3:8b
+
+          ## Mistral Models via Ollama
+          SERVICES__DEVSTRAL__TYPE: Ollama
+          SERVICES__DEVSTRAL__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__DEVSTRAL__MODELID: devstral:24b
+
+          ## Phi Models via Ollama
+          SERVICES__PHI4__TYPE: Ollama
+          SERVICES__PHI4__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__PHI4__MODELID: phi4 
+
+          ## Llama Models via Ollama
+          SERVICES__LLAMA4__TYPE: Ollama
+          SERVICES__LLAMA4__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__LLAMA4__MODELID: llama4:scout
+
+          SERVICES__LLAMA33__TYPE: Ollama
+          SERVICES__LLAMA33__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__LLAMA33__MODELID: llama3.3
+
+          ## Nomic Embedding Models via Ollama
+          SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
+          SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:latest
