@@ -1,6 +1,3 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: Build & Test
 
 on:
@@ -10,53 +7,64 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build: 
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tag: ['AzureOpenAI', 'OllamaPhi4', 'OllamaDevstral']
-        include:
-          - tag: AzureOpenAI
-            completion: GPT4OMINI
-            embedding: TEXTEMBEDDINGADA002
-          - tag: Ollama
-            completion: DEVSTRAL
-            embedding: NOMICEMBEDTEXT
-  
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.x
-    - name: Restore dependencies
-      run: dotnet restore
-      working-directory: ./src/
-    - name: Build
-      run: dotnet build --no-restore
-      working-directory: ./src/
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-      working-directory: ./src/
-      env: 
-        DATABASE__CONNECTIONSTRING: ${{ secrets.DATABASE__CONNECTIONSTRING }} 
-        SERVICES__GPT4OMINI__TYPE: AzureOpenAI
-        SERVICES__GPT4OMINI__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
-        SERVICES__GPT4OMINI__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
-        SERVICES__GPT4OMINI__DEPLOYMENT: gpt-4o-mini
-        SERVICES__TEXTEMBEDDINGADA002__TYPE: AzureOpenAI
-        SERVICES__TEXTEMBEDDINGADA002__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
-        SERVICES__TEXTEMBEDDINGADA002__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
-        SERVICES__TEXTEMBEDDINGADA002__DEPLOYMENT: text-embedding-ada-002
-        SERVICES__QWEN25CODER__TYPE: Ollama
-        SERVICES__QWEN25CODER__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-        SERVICES__QWEN25CODER__MODELID: qwen2.5-coder:latest
-        SERVICES__DEVSTRAL__TYPE: Ollama
-        SERVICES__DEVSTRAL__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-        SERVICES__DEVSTRAL__MODELID: devstral:24b
-        SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
-        SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-        SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:latest
-        KERNEL__COMPLETION: ${{ matrix.COMPLETION }}
-        KERNEL__EMBEDDING: ${{ matrix.EMBEDDING }}
-        MEMORY__KIND: volatile
+  gpt-4o-mini:
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: gpt-4o-mini
+      completion: GPT4OMINI
+      embedding: TEXTEMBEDDINGADA002
+
+  devstral:
+    needs: gpt-4o-mini
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: devstral
+      completion: DEVSTRAL
+      embedding: NOMICEMBEDTEXT
+
+  phi4:
+    needs: devstral
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: phi4
+      completion: PHI4
+      embedding: NOMICEMBEDTEXT
+
+  qwen2-5-coder:
+    needs: phi4
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: qwen2.5-coder
+      completion: QWEN25CODER
+      embedding: NOMICEMBEDTEXT
+
+  qwen3-8b:
+    needs: qwen2-5-coder
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: qwen3:8b
+      completion: QWEN38B
+      embedding: NOMICEMBEDTEXT
+
+  llama3-3:
+    needs: qwen3-8b
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: llama3.3
+      completion: LLAMA33
+      embedding: NOMICEMBEDTEXT
+
+  llama4:
+    needs: llama3-3
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      tag: llama4
+      completion: LLAMA4
+      embedding: NOMICEMBEDTEXT
