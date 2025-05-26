@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -32,9 +33,15 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                     .AddEnvironmentVariables()
                     .Build();
 
-            this.kernel = AgentKernelFactory.ConfigureKernel(configuration, NullLoggerFactory.Instance);
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+                builder.SetMinimumLevel(LogLevel.Debug);
+            });
 
-            this.agent = DatabaseAgentFactory.CreateAgentAsync(kernel, NullLoggerFactory.Instance).Result;
+            this.kernel = AgentKernelFactory.ConfigureKernel(configuration, loggerFactory);
+
+            this.agent = DatabaseAgentFactory.CreateAgentAsync(kernel, loggerFactory).Result;
         }
 
         [Test, Order(0)]

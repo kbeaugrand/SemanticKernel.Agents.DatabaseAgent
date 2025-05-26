@@ -92,6 +92,8 @@ internal sealed class DatabasePlugin
                 throw new InvalidOperationException("The kernel was unable to generate the expected query.");
             }
 
+            this._log.LogInformation("SQL query generated: {sqlQuery}", sqlQuery);
+
             var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
 
             (bool isQueryExecutionFiltered, string filterMessage) = await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
