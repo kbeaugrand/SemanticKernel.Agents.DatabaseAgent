@@ -53,11 +53,12 @@ Do not modify names that are already correctly bracketed. The formatting should 
 
 ```json
 {
-  "query": "SELECT name, email FROM users WHERE registered_date > '2023-01-01'",
   "comments": [
+    "Provider is MySQL",
     "Assumes 'registered_date' is stored in a DATE or DATETIME format compatible with the string '2023-01-01'.",
     "Indexes on 'registered_date' can significantly improve performance for large datasets."
-  ]
+  ],
+  "query": "SELECT name, email FROM users WHERE registered_date > '2023-01-01'"
 ```
 
 ---
@@ -79,13 +80,14 @@ Do not modify names that are already correctly bracketed. The formatting should 
 #### Output:
 ```json
 {
-  "query": "SELECT p.name, SUM(s.amount) AS total_sales FROM products p JOIN sales s ON p.id = s.product_id GROUP BY p.name HAVING SUM(s.amount) > 1000;",
   "comments": [
+    "Provider is PostgreSQL",
     "Assumes each sale in the 'sales' table is linked to a product via 'product_id'.",
     "Using HAVING instead of WHERE because aggregate function SUM(s.amount) is used for filtering.",
     "Ensure proper indexing on 'sales.product_id' and possibly 'sales.amount' for better performance.",
     "GROUP BY on 'p.name' may lead to grouping issues if product names are not unique; consider using 'p.id' instead for more accuracy."
-  ]}
+  ]},
+  "query": "SELECT p.name, SUM(s.amount) AS total_sales FROM products p JOIN sales s ON p.id = s.product_id GROUP BY p.name HAVING SUM(s.amount) > 1000;"
 ```
 
 Use placeholders like [DBMS], [natural language query], and [table definitions] where details are not provided explicitly, and adapt the examples for the information given.

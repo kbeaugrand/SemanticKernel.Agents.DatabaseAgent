@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -81,7 +82,7 @@ public static class DatabaseAgentFactory
         loggingFactory.CreateLogger<DatabaseKernelAgent>()
             .LogInformation("Creating a new agent definition.");
 
-        var tableDescriptions = await MemorizeAgentSchema(kernel, cancellationToken);
+        var tableDescriptions = await MemorizeAgentSchema(kernel, loggingFactory, cancellationToken);
 
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
 
@@ -140,11 +141,11 @@ public static class DatabaseAgentFactory
         };
     }
 
-    private static async Task<string> MemorizeAgentSchema(Kernel kernel, CancellationToken cancellationToken)
+    private static async Task<string> MemorizeAgentSchema(Kernel kernel, ILoggerFactory loggerFactory, CancellationToken cancellationToken)
     {
         var stringBuilder = new StringBuilder();
 
-        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), cancellationToken)
+        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), loggerFactory, cancellationToken)
                                                                 .ConfigureAwait(false);
 
         var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
@@ -205,7 +206,7 @@ public static class DatabaseAgentFactory
         }
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, ILoggerFactory loggerFactory, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
@@ -218,8 +219,12 @@ public static class DatabaseAgentFactory
 
         StringBuilder sb = new StringBuilder();
 
+        var logger = loggerFactory?.CreateLogger(nameof(DatabaseAgentFactory)) ?? NullLoggerFactory.Instance.CreateLogger(nameof(DatabaseAgentFactory));
+
         await foreach (var item in tables)
         {
+            logger.LogDebug("Processing table: {Table}", item);
+
             var tableName = await Try(async (e) =>
              {
                  var tableNameResponse = await kernel.InvokePromptAsync(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
@@ -230,8 +235,10 @@ public static class DatabaseAgentFactory
                                     .ConfigureAwait(false);
 
                  return tableNameResponse.GetValue<string>();
-             }, cancellationToken: cancellationToken)
+             }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
+            logger.LogDebug("Extracted table name: {TableName}", tableName);
 
             var existingRecordSearch = await kernel.GetRequiredService<IVectorStoreRecordCollection<Guid, TableDefinitionSnippet>>()
                                                     .VectorizedSearchAsync(await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
@@ -248,6 +255,8 @@ public static class DatabaseAgentFactory
                 continue;
             }
 
+            logger.LogDebug("No existing record found for table: {TableName}, generating structure and data sample.", tableName);
+
             var tableStructureResponse = await Try(async (e) =>
             {
                 var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
@@ -257,11 +266,15 @@ public static class DatabaseAgentFactory
                 .ConfigureAwait(false);
 
                 return JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
-            }, cancellationToken: cancellationToken)
+            }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
+            logger.LogDebug("Generated table structure for {TableName}: {Query}", tableName, tableStructureResponse.Query);
 
             var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableStructureResponse.Query, null, cancellationToken)
                                             .ConfigureAwait(false));
+
+            logger.LogDebug("Table definition for {TableName}: {Definition}", tableName, tableDefinition);
 
             var tableDataStructure = await Try(async (e) =>
             {
@@ -272,11 +285,15 @@ public static class DatabaseAgentFactory
                     .ConfigureAwait(false);
 
                 return JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!)!;
-            }, cancellationToken: cancellationToken)
+            }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
+            logger.LogDebug("Generated table data extract for {TableName}: {Query}", tableName, tableDataStructure.Query);
 
             var tableExtract = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableDataStructure.Query, null, cancellationToken)
                                             .ConfigureAwait(false));
+
+            logger.LogDebug("Table data extract for {TableName}: {Extract}", tableName, tableExtract);
 
             var tableExplain = await Try(async (e) =>
             {
@@ -288,14 +305,16 @@ public static class DatabaseAgentFactory
                                   .ConfigureAwait(false);
 
                 return JsonSerializer.Deserialize<ExplainTableResponse>(description.GetValue<string>()!)!;
-            }, cancellationToken: cancellationToken)
+            }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
+            logger.LogDebug("Generated table description for {TableName}: {Description}", tableName, tableExplain.Description);
 
             yield return (tableName, tableDefinition, tableExplain.Description, tableExtract)!;
         }
     }
 
-    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 3, CancellationToken? cancellationToken = null)
+    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 1, ILoggerFactory loggerFactory = null!, CancellationToken? cancellationToken = null)
     {
         var token = cancellationToken ?? CancellationToken.None;
 
@@ -312,6 +331,9 @@ public static class DatabaseAgentFactory
             {
                 if (i == count - 1)
                 {
+                    (loggerFactory ?? NullLoggerFactory.Instance)
+                                .CreateLogger(nameof(DatabaseAgentFactory))
+                                    .LogWarning(ex, "Failed to execute the function after {Count} attempts.", count);
                     throw;
                 }
 

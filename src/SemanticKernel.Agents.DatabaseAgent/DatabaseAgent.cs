@@ -1,5 +1,5 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Services;
 using SemanticKernel.Agents.DatabaseAgent;
@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using Validation;
 
 namespace Microsoft.SemanticKernel.Agents;
 
@@ -176,6 +175,11 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
                 arguments?.ExecutionSettings,
                 arguments ?? []);
 
+        executionSettings ??= new OpenAIPromptExecutionSettings
+        {
+            ResponseFormat = "json_object",
+        };
+
         return (chatCompletionService, executionSettings);
     }
 
@@ -201,6 +205,67 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
             chat.Add(new ChatMessageContent(AuthorRole.System, additionalInstructions) { AuthorName = this.Name });
         }
 
+        chat.Add(new ChatMessageContent(AuthorRole.System, $$$"""
+                # Output Format
+
+                The output should be a JSON object structured as follows:
+
+                ```json
+                {
+                    "thinking": "Your step-by-step thought process and reasoning based on the query result.",
+                    "answer": "Your final answer in natural language, addressing the question explicitly."
+                }
+                ```
+
+                # Examples
+
+                **Example 1**
+
+                _Query_: What is the capital of France?  
+                _Query Result_: 
+                | Country       | Capital     |
+                |---------------|-------------|
+                | France        | Paris       |
+                | Germany       | Berlin      |
+                | Spain         | Madrid      |
+                | Italy         | Rome        |
+                | Portugal      | Lisbon      |
+                | Netherlands   | Amsterdam   |
+                | Belgium       | Brussels    |
+                | Switzerland   | Bern        |
+                | Austria       | Vienna      |
+                
+
+                _Output_:  
+                ```json
+                {
+                    "thinking": "The query result indicates that the capital of France is listed as 'Paris.' Therefore, based on this data, the capital of France is Paris.",
+                    "answer": "The capital of France is Paris."
+                }
+                ```
+
+                **Example 2**
+
+                _Query_: What is the population of New York City?  
+                _Query Result_: 
+                | City           | Population |
+                |----------------|------------|
+                | New York City  | 8,419,600  |
+                | Los Angeles    | 3,979,576  |
+                | Chicago        | 2,693,976  |
+                | Houston        | 2,303,482  |
+                | Phoenix        | 1,563,025  |
+                
+
+                _Output_:  
+                ```json
+                {
+                    "thinking": "The query result specifies that the population of New York City is 8,419,600. This directly answers the question about its population.",
+                    "answer": "The population of New York City is 8,419,600."
+                }
+                ```
+                """) { AuthorName = this.Name });
+
         chat.AddRange(history);
 
         return chat;
@@ -225,7 +290,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
                                                     }, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
-        history.Insert(0, new ChatMessageContent(AuthorRole.System, "Executing query...") { AuthorName = this.Name });
+        history.Insert(0, new ChatMessageContent(AuthorRole.System, "Here are the results from the database:") { AuthorName = this.Name });
         history.Insert(1, new ChatMessageContent(AuthorRole.System, data.GetValue<string>()) { AuthorName = this.Name });
 
         (IChatCompletionService chatCompletionService, PromptExecutionSettings? executionSettings) = GetChatCompletionService(kernel, arguments);
@@ -257,6 +322,15 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
         foreach (ChatMessageContent message in messages)
         {
             message.AuthorName = this.Name;
+
+            try
+            {
+                message.Content = JsonSerializer.Deserialize<AgentResponse>(message.Content!)!.Answer;
+            }
+            catch (JsonException ex)
+            {
+                Logger.LogWarning(ex, "Failed to deserialize agent response content to AgentResponse. Content: {Content}", message.Content);
+            }
 
             yield return message;
         }
