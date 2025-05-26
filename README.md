@@ -12,15 +12,22 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 
 ## Models Tested
 
-| Model Name      | NL 2 SQL  | Quality Insurance |
-|-----------------|:---------:|:----------------:|
-| gpt-4o-mini     | ✅        | ✅               |
-| devstral        | ✅        | ✅               |
-| phi4            | ✅        | ⚠️ (WIP)         |
-| qwen2-5-coder   | ✅        | ⚠️ (WIP)         |
-| qwen3-8b        | ⚠️ (WIP)  | ⚠️ (WIP)         |
-| llama3-3        | ✅        | ⚠️ (WIP)         |
-| llama4          | ✅        | ⚠️ (WIP)         |
+| Model Name          | NL 2 SQL  | Quality Insurance | Score  |
+|---------------------|:---------:|:----------------:|:------:|
+| gpt-4o-mini         | ✅        | ✅               |   80%  |
+| devstral:24b        | ✅        | ✅               |   70%  |
+| phi4:14b            | ✅        | ✅               |   90%  |
+| qwen2.5-coder:7b    | ✅        | ✅               |   80%  |
+| qwen3:8b            | ✅        | ✅               |   80%  |
+| llama3.3:70b        | ✅        | ✅               |   80%  |
+| llama4:scout        | ✅        | ✅               |   60%  |
+
+> Note: current score is a personal evaluation regarding the test cases with Northwind database and a set of queries.
+
+**DICLAIMER**
+
+Even if the model is marked as tested, it does not mean that it will work for all queries. 
+Furthermore, using LLM agents might lead to risks such as unintended data exposure, security vulnerabilities, and inefficient query execution, potentially compromising system integrity and compliance requirements.
 
 ## Getting Started
 

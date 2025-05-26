@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.Data;
@@ -177,8 +178,12 @@ public static class DatabaseAgentFactory
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings, functionName: AgentPromptConstants.WriteSQLQuery);
-
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(
+                executionSettings: promptExecutionSettings,
+                templateFormat: "handlebars",
+                promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
+                promptTemplateFactory: new HandlebarsPromptTemplateFactory());
+        
         var defaultKernelArguments = new KernelArguments
             {
                 { "providerName", connection.GetProviderName() },
@@ -210,7 +215,11 @@ public static class DatabaseAgentFactory
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
-        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings, functionName: AgentPromptConstants.WriteSQLQuery);
+        var sqlWriter = KernelFunctionFactory.CreateFromPrompt(
+                executionSettings: promptExecutionSettings,
+                templateFormat: "handlebars",
+                promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
+                promptTemplateFactory: new HandlebarsPromptTemplateFactory());
         var extractTableName = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName), promptExecutionSettings, functionName: AgentPromptConstants.ExtractTableName);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), promptExecutionSettings, functionName: AgentPromptConstants.ExplainTable);
         var defaultKernelArguments = new KernelArguments

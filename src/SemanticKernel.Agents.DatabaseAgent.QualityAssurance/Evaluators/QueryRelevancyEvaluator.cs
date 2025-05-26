@@ -4,7 +4,9 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
 using Microsoft.SemanticKernel.Services;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
+using SemanticKernel.Agents.DatabaseAgent.QualityAssurance.Evaluators;
 using System.Numerics.Tensors;
+using System.Text.Json;
 
 namespace SemanticKernel.Agents.DatabaseAgent.QualityAssurance;
 
@@ -20,6 +22,7 @@ public class QueryRelevancyEvaluator
         Temperature = 9.99999993922529E-09,
         TopP = 9.99999993922529E-09,
         Seed = 0L,
+        ResponseFormat = "json_object",
     }, "ExtractQuestion");
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
@@ -38,8 +41,10 @@ public class QueryRelevancyEvaluator
                 { "query", query }
             });
 
+        var evaluation = JsonSerializer.Deserialize<QueryRelevancyEvaluation>(result.GetValue<string>()!)!;
+
         IList<ReadOnlyMemory<float>> embeddings = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
-                                                                .GenerateEmbeddingsAsync([prompt, result.GetValue<string>()!], kernel)
+                                                                .GenerateEmbeddingsAsync([prompt, evaluation.Question], kernel)
                                                                     .ConfigureAwait(false);
 
         return TensorPrimitives.CosineSimilarity(embeddings.First().Span, embeddings.Last().Span);

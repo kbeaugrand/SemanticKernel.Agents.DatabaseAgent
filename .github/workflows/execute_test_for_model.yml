@@ -34,6 +34,10 @@ jobs:
           KERNEL__COMPLETION: ${{ inputs.completion }}
           KERNEL__EMBEDDING: ${{ inputs.embedding }}
           MEMORY__KIND: volatile
+          MEMORY__TOPK: 15
+          MEMORY__MAXTOKENS: 2000
+          MEMORY__TEMPERATURE: 0.1
+          MEMORY__TOPP: 0.1
 
           ## Azure OpenAI Service
           SERVICES__GPT4OMINI__TYPE: AzureOpenAI
@@ -48,7 +52,7 @@ jobs:
           ## Qwen Models via Ollama
           SERVICES__QWEN25CODER__TYPE: Ollama
           SERVICES__QWEN25CODER__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-          SERVICES__QWEN25CODER__MODELID: qwen2.5-coder:latest
+          SERVICES__QWEN25CODER__MODELID: qwen2.5-coder:7b
           SERVICES__QWEN38B__TYPE: Ollama
           SERVICES__QWEN38B__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
           SERVICES__QWEN38B__MODELID: qwen3:8b
@@ -61,7 +65,7 @@ jobs:
           ## Phi Models via Ollama
           SERVICES__PHI4__TYPE: Ollama
           SERVICES__PHI4__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-          SERVICES__PHI4__MODELID: phi4 
+          SERVICES__PHI4__MODELID: phi4:14b
 
           ## Llama Models via Ollama
           SERVICES__LLAMA4__TYPE: Ollama
@@ -70,7 +74,7 @@ jobs:
 
           SERVICES__LLAMA33__TYPE: Ollama
           SERVICES__LLAMA33__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-          SERVICES__LLAMA33__MODELID: llama3.3
+          SERVICES__LLAMA33__MODELID: llama3.3:70b
 
           ## Nomic Embedding Models via Ollama
           SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
