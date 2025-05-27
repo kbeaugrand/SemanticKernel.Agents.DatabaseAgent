@@ -26,19 +26,33 @@ The output should be a **short paragraph** in natural language. The description 
 **Input**:  
 ```
 Table Definition:  
-- id: INTEGER (Primary Key)  
-- customer_name: VARCHAR(255)  
-- email: VARCHAR(255)  
-- phone_number: VARCHAR(20)  
-- created_at: DATETIME  
-- updated_at: DATETIME  
+| Column Name           | Data Type         | Constraints           |
+|-----------------------|-------------------|-----------------------|
+| Book_ID               | INT               | PRIMARY KEY           |
+| Title                 | VARCHAR(255)      | NOT NULL              |
+| Author_ID	            | INT				| FOREIGN KEY			|
+| Publication_Year      | INT               | NOT NULL              |
+| Genre					| VARCHAR(50		| FOREIGN KEY			|
+| ISBN                  | VARCHAR(13)       | UNIQUE                |
+```
+
+```Table extract: 
+| Book_ID | Title                     | Author                     | Publication_Year | Genre             | ISBN                |
+|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|
+| 1       | The Little Prince         | 1034					   | 1943              | FICTION           | 978-2-07-061275-8   |
+| 2       | 1984                      | 732			               | 1949              | POLAR			   | 978-0-452-28423-4   |
+| 3       | The Great Gatsby          | 64346				       | 1925              | FICTION           | 978-0-7432-7356-5   |
 ```
 
 **Output**:
 ```json
 {
-  "description": "This table appears to store information about customers. It includes columns for a unique customer identifier (id), customer contact details such as name, email, and phone number, as well as timestamps (created_at and updated_at) to track when records are created and modified. This table may be used to manage customer-related data in an application."
-}
+  "tableName": "Book",
+  "attributes": "- **Book_ID** (primary key): Unique identifier for the book.\n- **Title**: Title of the book.\n- **Author**: Author of the book.\n- **Publication_Year**: Year of publication for the book.\n- **Genre**: Literary genre of the book.\n- **ISBN**: ISBN code of the book.\n\n",
+  "recordSample:"| Book_ID | Title                     | Author                     | Publication_Year | Genre             | ISBN                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
+  "definition":"This simplified model focuses on managing books in a library. It highlights the key information needed to catalog and search for books."
+  "relations": "| From Table | To Table | Relation     | Description                                                         |\n|------------|----------|--------------|---------------------------------------------------------------------|\n| Book       | Author   | Many-to-One  | Each book is written by one author, but an author can write multiple books. |\n| Book       | Genre    | Many-to-One  | Each book belongs to one genre, but a genre can have multiple books. |",
+}       
 ```
 ---
 

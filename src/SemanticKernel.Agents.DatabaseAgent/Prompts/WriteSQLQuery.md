@@ -103,7 +103,8 @@ Use placeholders like [DBMS], [natural language query], and [table definitions] 
 #### Input:
 **DBMS Provider:** {{$providerName}}
 **Natural Language Query:** "{{$prompt}}"
-**Tables and Columns:**
+[BEGIN SEMANTIC MODEL]
 {{$tablesDefinition}}
+[END SEMANTIC MODEL]
 
 #### Output:

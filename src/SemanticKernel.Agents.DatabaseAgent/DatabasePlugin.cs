@@ -74,8 +74,10 @@ internal sealed class DatabasePlugin
 
             await foreach (var relatedTable in relatedTables)
             {
-                tableDefinitionsSb.AppendLine($"## {relatedTable.Record.TableName}");
-                tableDefinitionsSb.AppendLine(relatedTable.Record.Definition);
+                tableDefinitionsSb.AppendLine(relatedTable.Record.Description);
+                tableDefinitionsSb.AppendLine();
+                tableDefinitionsSb.AppendLine("---");
+                tableDefinitionsSb.AppendLine();
             }
 
             var tableDefinitions = tableDefinitionsSb.ToString();
