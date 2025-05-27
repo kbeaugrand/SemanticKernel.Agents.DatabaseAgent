@@ -185,7 +185,7 @@ public static class DatabaseAgentFactory
                 { "tablesDefinitions", "" }
             };
 
-        using var reader = await Try(async (e) =>
+        using var reader = await RetryHelper.Try(async (e) =>
         {
             var tablesGenerator = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
             {
@@ -226,7 +226,7 @@ public static class DatabaseAgentFactory
         {
             logger.LogDebug("Processing table: {Table}", item);
 
-            var tableName = await Try(async (e) =>
+            var tableName = await RetryHelper.Try(async (e) =>
              {
                  var tableNameResponse = await extractTableName.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                                     {
@@ -265,7 +265,7 @@ public static class DatabaseAgentFactory
 
             logger.LogDebug("No existing record found for table: {TableName}, generating structure and data sample.", tableName);
 
-            var tableStructureResponse = await Try(async (e) =>
+            var tableStructureResponse = await RetryHelper.Try(async (e) =>
             {
                 var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
@@ -284,7 +284,7 @@ public static class DatabaseAgentFactory
 
             logger.LogDebug("Table definition for {TableName}: {Definition}", tableName, tableDefinition);
 
-            var tableDataStructure = await Try(async (e) =>
+            var tableDataStructure = await RetryHelper.Try(async (e) =>
             {
                 var extract = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
@@ -303,7 +303,7 @@ public static class DatabaseAgentFactory
 
             logger.LogDebug("Table data extract for {TableName}: {Extract}", tableName, tableExtract);
 
-            var tableExplain = await Try(async (e) =>
+            var tableExplain = await RetryHelper.Try(async (e) =>
             {
                 var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
                                     {
@@ -331,38 +331,5 @@ public static class DatabaseAgentFactory
 
             yield return (tableName, tableDefinition, description, tableExtract)!;
         }
-    }
-
-    private static async Task<T> Try<T>(Func<Exception?, Task<T>> func, int count = 3, ILoggerFactory loggerFactory = null!, CancellationToken? cancellationToken = null)
-    {
-        var token = cancellationToken ?? CancellationToken.None;
-
-        Exception? lastException = null;
-
-        for (int i = 0; i < count; i++)
-        {
-            try
-            {
-                return await func(lastException)
-                            .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (i == count - 1)
-                {
-                    (loggerFactory ?? NullLoggerFactory.Instance)
-                                .CreateLogger(nameof(DatabaseAgentFactory))
-                                    .LogWarning(ex, "Failed to execute the function after {Count} attempts.", count);
-                    throw;
-                }
-
-                lastException = ex;
-
-                await Task.Delay(200, token)
-                            .ConfigureAwait(false);
-            }
-        }
-        throw new InvalidOperationException("Failed to execute the function.");
-
     }
 }

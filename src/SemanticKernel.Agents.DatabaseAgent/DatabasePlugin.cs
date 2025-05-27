@@ -5,10 +5,12 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Text.Json;
@@ -37,16 +39,17 @@ internal sealed class DatabasePlugin
         this._log = loggerFactory?.CreateLogger<DatabasePlugin>() ?? new NullLogger<DatabasePlugin>();
         this._vectorStore = vectorStore;
 
-        this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), new OpenAIPromptExecutionSettings
+        this._writeSQLFunction = KernelFunctionFactory.CreateFromPrompt(executionSettings: new OpenAIPromptExecutionSettings
         {
             MaxTokens = this._options.MaxTokens,
             Temperature = this._options.Temperature,
             TopP = this._options.TopP,
             Seed = 0,
-#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
             ResponseFormat = "json_object"
-#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-        });
+        },
+        templateFormat: "handlebars",
+        promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
+        promptTemplateFactory: new HandlebarsPromptTemplateFactory());
     }
 
     [Description("Execute a query into the database. " +
@@ -82,34 +85,44 @@ internal sealed class DatabasePlugin
 
             var tableDefinitions = tableDefinitionsSb.ToString();
 
-            var sqlQuery = await GetSQLQueryStringAsync(kernel, prompt, tableDefinitions, cancellationToken)
+            var sqlQuery = string.Empty;
+
+            using var dataTable = await RetryHelper.Try<DataTable>(async (e) =>
+            {
+                sqlQuery = await GetSQLQueryStringAsync(kernel, 
+                                                        prompt, tableDefinitions, 
+                                                        cancellationToken: cancellationToken, 
+                                                        previousSQLException: e, 
+                                                        previousSQLQuery: sqlQuery)
                                             .ConfigureAwait(false);
 
-            if (string.IsNullOrWhiteSpace(sqlQuery))
-            {
-                this._log.LogWarning("SQL query is empty for prompt: {prompt}", prompt);
-                throw new InvalidOperationException("The kernel was unable to generate the expected query.");
-            }
+                if (string.IsNullOrWhiteSpace(sqlQuery))
+                {
+                    this._log.LogWarning("SQL query is empty for prompt: {prompt}", prompt);
+                    throw new InvalidOperationException("The kernel was unable to generate the expected query.");
+                }
 
-            this._log.LogInformation("SQL query generated: {sqlQuery}", sqlQuery);
+                this._log.LogInformation("SQL query generated: {sqlQuery}", sqlQuery);
 
-            var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
+                var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
 
-            (bool isQueryExecutionFiltered, string filterMessage) = await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
-                                     _ =>
-                                    {
-                                        return Task.FromResult((false, string.Empty));
-                                    },
-                                    queryExecutionContext)
-                                .ConfigureAwait(false);
+                (bool isQueryExecutionFiltered, string filterMessage) = await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
+                                         _ =>
+                                         {
+                                             return Task.FromResult((false, string.Empty));
+                                         },
+                                        queryExecutionContext)
+                                    .ConfigureAwait(false);
 
-            if (isQueryExecutionFiltered)
-            {
-                return filterMessage;
-            }
+                if (isQueryExecutionFiltered)
+                {
+                    throw new Exception($"Query execution was filtered: {filterMessage}");
+                }
 
-            using var dataTable = await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
-                                                     .ConfigureAwait(false);
+                return await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
+                                                         .ConfigureAwait(false);
+            }, count: 3, _loggerFactory, cancellationToken)
+                .ConfigureAwait(false);            
 
             var result = MarkdownRenderer.Render(dataTable);
 
@@ -127,18 +140,22 @@ internal sealed class DatabasePlugin
     private async Task<string> GetSQLQueryStringAsync(Kernel kernel,
                                                       string prompt,
                                                       string tablesDefinitions,
-                                            CancellationToken cancellationToken)
+                                                      string? previousSQLQuery = null,
+                                                      Exception? previousSQLException = null,
+                                                      CancellationToken? cancellationToken = null)
     {
         var arguments = new KernelArguments()
         {
             { "prompt", prompt },
             { "tablesDefinition", tablesDefinitions },
+            { "previousAttempt", previousSQLQuery },
+            { "previousException", previousSQLException },
             { "providerName", kernel.GetRequiredService<DbConnection>().GetProviderName() }
         };
 
         this._log.LogInformation("Write SQL query for: {prompt}", prompt);
 
-        var functionResult = await this._writeSQLFunction.InvokeAsync(kernel, arguments, cancellationToken)
+        var functionResult = await this._writeSQLFunction.InvokeAsync(kernel, arguments, cancellationToken ?? CancellationToken.None)
                                                          .ConfigureAwait(false);
 
         return JsonSerializer.Deserialize<WriteSQLQueryResponse>(functionResult.GetValue<string>()!)!.Query!;
