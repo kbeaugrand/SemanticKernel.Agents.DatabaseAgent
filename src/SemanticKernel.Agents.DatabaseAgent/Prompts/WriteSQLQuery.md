@@ -101,10 +101,21 @@ Use placeholders like [DBMS], [natural language query], and [table definitions] 
 ## Let's do it for real
 
 #### Input:
-**DBMS Provider:** {{$providerName}}
-**Natural Language Query:** "{{$prompt}}"
+**DBMS Provider:** {{providerName}}
+**Natural Language Query:** "{{prompt}}"
+
+
+{{ #if previousAttempt }}
+##### Previous Attempt
+Here is the previous attempt. Try to improve it or correct any errors:
+```sql
+{{ previousAttempt }}
+```
+Error: {{ previousException }}
+{{/if}}
+
 [BEGIN SEMANTIC MODEL]
-{{$tablesDefinition}}
+{{tablesDefinition}}
 [END SEMANTIC MODEL]
 
 #### Output:
