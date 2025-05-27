@@ -195,11 +195,11 @@ public static class DatabaseAgentFactory
 
             var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
 
-           return await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
-                                        .ConfigureAwait(false);
+            return await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
+                                         .ConfigureAwait(false);
         }, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        
+
         foreach (DataRow row in reader!.Rows)
         {
             yield return MarkdownRenderer.Render(row);
@@ -211,6 +211,7 @@ public static class DatabaseAgentFactory
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery), promptExecutionSettings, functionName: AgentPromptConstants.WriteSQLQuery);
+        var extractTableName = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName), promptExecutionSettings, functionName: AgentPromptConstants.ExtractTableName);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), promptExecutionSettings, functionName: AgentPromptConstants.ExplainTable);
         var defaultKernelArguments = new KernelArguments
             {
@@ -227,14 +228,13 @@ public static class DatabaseAgentFactory
 
             var tableName = await Try(async (e) =>
              {
-                 var tableNameResponse = await kernel.InvokePromptAsync(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
-                                    new KernelArguments(defaultKernelArguments)
+                 var tableNameResponse = await extractTableName.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                                     {
                                         { "item", item }
                                     }, cancellationToken: cancellationToken)
                                     .ConfigureAwait(false);
 
-                 return tableNameResponse.GetValue<string>();
+                 return JsonSerializer.Deserialize<ExtractTableNameResponse>(tableNameResponse.GetValue<string>()!)!.TableName;
              }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
@@ -316,9 +316,20 @@ public static class DatabaseAgentFactory
             }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            logger.LogDebug("Generated table description for {TableName}: {Description}", tableName, tableExplain.Description);
+            var description = $"""
+                ### {tableName}
+                {tableExplain.Definition}
 
-            yield return (tableName, tableDefinition, tableExplain.Description, tableExtract)!;
+                #### Attributes
+                {tableExplain.Attributes}
+
+                #### Relations
+                {tableExplain.Relations}
+                """;
+
+            logger.LogDebug("Generated table description for {TableName}: {Description}", tableName, description);
+
+            yield return (tableName, tableDefinition, description, tableExtract)!;
         }
     }
 

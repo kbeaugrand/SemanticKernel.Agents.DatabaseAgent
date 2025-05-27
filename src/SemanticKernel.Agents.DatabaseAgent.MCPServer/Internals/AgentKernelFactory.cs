@@ -26,9 +26,6 @@ internal static class AgentKernelFactory
                 new VectorStoreDataProperty(nameof(TableDefinitionSnippet.Definition), typeof(string)),
                 new VectorStoreDataProperty(nameof(TableDefinitionSnippet.Description), typeof(string)){ IsFullTextIndexed  = true },
                 new VectorStoreVectorProperty(nameof(TableDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>), dimensions: vectorDimensions)
-                {
-                    DistanceFunction = DistanceFunction.CosineDistance
-                }
             }
         };
     }
@@ -44,9 +41,6 @@ internal static class AgentKernelFactory
                 new VectorStoreDataProperty(nameof(AgentDefinitionSnippet.Description), typeof(string)){ IsFullTextIndexed  = true },
                 new VectorStoreDataProperty(nameof(AgentDefinitionSnippet.Instructions), typeof(string)),
                 new VectorStoreVectorProperty(nameof(AgentDefinitionSnippet.TextEmbedding), typeof(ReadOnlyMemory<float>), dimensions: vectorDimensions)
-                {
-                    DistanceFunction = DistanceFunction.CosineDistance
-                }
             }
         };
     }
