@@ -31,7 +31,12 @@ Return a JSON object formatted as:
 
 # Examples
 
-**Input**: `Products Table`  
+**Input**: 
+```
+| name |
+| --- |
+| Products Table |
+```
 **Provider**: `Microsoft SQL Server`
 **Output**:  
 ```json
@@ -41,7 +46,12 @@ Return a JSON object formatted as:
 }
 ```
 
-**Input**: `Products Table`  
+**Input**: 
+```
+| name |
+| --- |
+| Products Table |
+``` 
 **Provider**: `PostgreSQL`
 **Output**:  
 ```json
@@ -51,7 +61,12 @@ Return a JSON object formatted as:
 }
 ```
 
-**Input**: `Products Table`  
+**Input**: 
+```
+| name |
+| --- |
+| Products Table |
+```
 **Provider**: `MySQL`
 **Output**:  
 ```json
@@ -61,7 +76,12 @@ Return a JSON object formatted as:
 }
 ```
 
-**Input**: `ValidTableName`
+**Input**: 
+```
+| name |
+| --- |
+| ValidTableName |
+```
 **Provider**: `Microsoft SQL Server`
 **Output**:  
 ```json
@@ -71,7 +91,12 @@ Return a JSON object formatted as:
 }
 ```
 
-**Input**: `[SpecialName]`
+**Input**:
+```
+| name |
+| --- |
+| [SpecialName] |
+```
 **Provider**: `SQLite`
 **Output**:  
 ```json

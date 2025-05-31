@@ -21,9 +21,22 @@ The output should be a **short paragraph** in natural language. The description 
 - Optionally elaborate on the relationships or dependencies between columns for additional clarity.
 - Avoid excessive technical jargon unless essential to the task.
 
+### Json schema
+
+```json
+{
+  "tableName": "The table name as described",
+  "attributes": "A markdown-formatted bullet list describing the columns in the table, including their names, types, and purposes.",
+  "recordSample": "A markdown-formatted table showing a few example rows from the dataset, illustrating the structure and content of the table.",
+  "definition": "A concise textual explanation of the table’s purpose and the type of data it represents within the overall data model.",
+  "relations": "A markdown-formatted table describing relationships between this table and others, including relationship types (e.g., one-to-many) and a short explanation."
+}     
+```
+
 ## Example
 
 **Input**:  
+
 ```
 Table Definition:  
 | Column Name           | Data Type         | Constraints           |
@@ -45,6 +58,7 @@ Table Definition:
 ```
 
 **Output**:
+
 ```json
 {
   "tableName": "Book",
@@ -57,10 +71,15 @@ Table Definition:
 ---
 
 If the context or purpose is unclear, explicitly note this in the response.
+Ensure the table name and columns are clearly defined in the output without any alteration of the original column names or types.
 
 # Let's Practice!
 
 **Input**:  
+```
+Table Name:
+{{$tableName}}
+```
 ```
 Table Definition:  
 {{$tableDefinition}}
