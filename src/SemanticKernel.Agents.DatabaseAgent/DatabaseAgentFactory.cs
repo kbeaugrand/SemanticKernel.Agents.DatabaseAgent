@@ -183,24 +183,29 @@ public static class DatabaseAgentFactory
                 templateFormat: "handlebars",
                 promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
                 promptTemplateFactory: new HandlebarsPromptTemplateFactory());
-        
+
         var defaultKernelArguments = new KernelArguments
             {
                 { "providerName", connection.GetProviderName() },
                 { "tablesDefinitions", "" }
             };
 
+        string previousSQLQuery = null!;
         using var reader = await RetryHelper.Try(async (e) =>
         {
             var tablesGenerator = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
             {
-                { "prompt", "List all available tables" }
+                { "prompt", "List all available tables" },
+                { "previousAttempt", previousSQLQuery },
+                { "previousException", e },
             })
             .ConfigureAwait(false);
 
             var response = JsonSerializer.Deserialize<WriteSQLQueryResponse>(tablesGenerator.GetValue<string>()!)!;
 
-            return await QueryExecutor.ExecuteSQLAsync(connection, response.Query, null, cancellationToken)
+            previousSQLQuery = response.Query;
+
+            return await QueryExecutor.ExecuteSQLAsync(connection, previousSQLQuery, null, cancellationToken)
                                          .ConfigureAwait(false);
         }, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -274,41 +279,46 @@ public static class DatabaseAgentFactory
 
             logger.LogDebug("No existing record found for table: {TableName}, generating structure and data sample.", tableName);
 
-            var tableStructureResponse = await RetryHelper.Try(async (e) =>
+            string previousSQLQuery = null!;
+            var tableDefinition = await RetryHelper.Try(async (e) =>
             {
                 var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"Show the current structure of '{tableName}'" }
+                    { "prompt", $"Show the current structure of '{tableName}'" },
+                    { "previousAttempt", previousSQLQuery },
+                    { "previousException", e },
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
-                return JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!)!;
+                 previousSQLQuery = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!).Query;
+
+                logger.LogDebug("Generated table structure for {TableName}: {Query}", tableName, previousSQLQuery);
+
+                return MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, previousSQLQuery, null, cancellationToken)
+                                                .ConfigureAwait(false));
             }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
-
-            logger.LogDebug("Generated table structure for {TableName}: {Query}", tableName, tableStructureResponse.Query);
-
-            var tableDefinition = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableStructureResponse.Query, null, cancellationToken)
-                                            .ConfigureAwait(false));
 
             logger.LogDebug("Table definition for {TableName}: {Definition}", tableName, tableDefinition);
 
-            var tableDataStructure = await RetryHelper.Try(async (e) =>
+            var tableExtract = await RetryHelper.Try(async (e) =>
             {
                 var extract = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"Get the first 5 rows for '{tableName}'" }
+                    { "prompt", $"Get the first 5 rows for '{tableName}'" },
+                    { "previousAttempt", previousSQLQuery },
+                    { "previousException", e },
                 }, cancellationToken)
                     .ConfigureAwait(false);
 
-                return JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!)!;
+                previousSQLQuery = JsonSerializer.Deserialize<WriteSQLQueryResponse>(extract.GetValue<string>()!).Query;
+
+                logger.LogDebug("Generated table data extract for {TableName}: {Query}", tableName, previousSQLQuery);
+
+                return MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, previousSQLQuery, null, cancellationToken)
+                                                .ConfigureAwait(false));
             }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
-
-            logger.LogDebug("Generated table data extract for {TableName}: {Query}", tableName, tableDataStructure.Query);
-
-            var tableExtract = MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, tableDataStructure.Query, null, cancellationToken)
-                                            .ConfigureAwait(false));
+                .ConfigureAwait(false);          
 
             logger.LogDebug("Table data extract for {TableName}: {Extract}", tableName, tableExtract);
 
@@ -316,6 +326,7 @@ public static class DatabaseAgentFactory
             {
                 var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
                                     {
+                                        { "tableName", tableName },
                                         { "tableDefinition", tableDefinition },
                                         { "tableDataExtract", tableExtract }
                                     })

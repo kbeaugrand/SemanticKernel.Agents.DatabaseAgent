@@ -5,9 +5,9 @@ namespace SemanticKernel.Agents.DatabaseAgent.QualityAssurance.Evaluators
     internal class QueryRelevancyEvaluation
     {
         [JsonPropertyName("reasoning")]
-        public string Reasoning { get; set; } = string.Empty;
+        public string[] Reasoning { get; set; } = [];
 
-        [JsonPropertyName("question")]
-        public string Question { get; set; } = string.Empty;
+        [JsonPropertyName("questions")]
+        public string[] Questions { get; set; } = [];
     }
 }

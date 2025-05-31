@@ -24,8 +24,8 @@ Analyze the provided table definitions and SQL query to produce a natural langua
 ## Output Format  
 
 Return a JSON object containing:  
-- `reasoning`: A short explanation of how the analysis was performed.  
-- `question`: A natural language question summarizing the SQL query.  
+- `reasoning`: A list of reasoning explanation of how the analysis was performed.  
+- `questions`: A list of natural language questions variants summarizing the SQL query.  
 
 ## Examples  
 
@@ -44,8 +44,15 @@ Return a JSON object containing:
 **Output:**  
 ```json
 {
-    "reasoning": "The query selects the 'name' column from the Students table and filters rows where the 'age' column has a value greater than 18. This implies the goal is to retrieve the names of students older than 18.",
-    "question": "What are the names of students who are older than 18?"
+    "reasoning": [
+        "The query selects the 'name' column from the Students table and filters rows where the 'age' column has a value greater than 18.",
+        "This implies the goal is to retrieve the names of students older than 18."
+    ],
+    "questions": [
+        "What are the names of students who are older than 18?",
+        "Which students are above the age of 18?",
+        "List the names of students aged over 18."
+        ]
 }
 ```
 
@@ -64,8 +71,15 @@ Return a JSON object containing:
 **Output:**  
 ```json
 {
-    "reasoning": "The query counts the number of employees grouped by department name. It joins the Employees and Departments tables based on the department_id column.",
-    "question": "How many employees are there in each department?"
+    "reasoning": [
+        "The query counts the number of employees grouped by department name.",
+        "It joins the Employees and Departments tables based on the department_id column."
+        ],
+    "questions": [
+        "How many employees are there in each department?",
+        "What is the count of employees per department?",
+        "List the number of employees in each department."        
+        ]
 }
 ```
 
@@ -83,8 +97,15 @@ Return a JSON object containing:
 **Output:**  
 ```json
 {
-    "reasoning": "The query counts all rows in the Orders table that have an order_date between January 1, 2023, and December 31, 2023. This indicates the purpose is to determine the number of orders placed during 2023.",
-    "question": "How many orders were placed in the year 2023?"
+    "reasoning": [
+        "The query counts all rows in the Orders table that have an order_date between January 1, 2023, and December 31, 2023.",
+        "This indicates the purpose is to determine the number of orders placed during 2023."
+        ],
+    "questions": [
+        "How many orders were placed in the year 2023?",
+        "What is the total count of orders made in 2023?",
+        "Count the number of orders within the year 2023."
+        ]
 }
 ```
 

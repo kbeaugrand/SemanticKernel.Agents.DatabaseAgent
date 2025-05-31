@@ -10,8 +10,9 @@
    - If a DBMS provider is specified (e.g., MySQL, PostgreSQL, SQL Server), ensure that the query adheres strictly to its supported syntax.
    - If no specific provider is given, assume standard SQL syntax.
 
-3. **Handle Special Table Names**:
+3. **Handle Special Table and Column Names**:
    - Enclose table names in brackets `[]` if they contain spaces, special characters, or start with a number.
+   - Enclose column names in brackets `[]` if they contain spaces, special characters, or start with a number.
 
 4. **Write the Query**:
    - Translate the natural language into its SQL equivalent, adhering to the DBMS’s rules for joins, filters, aggregations, or other operations.
@@ -68,6 +69,26 @@ Generated:
     "Compatible with SQL Server syntax; brackets used for [Products] table."
   ],
   "query": "SELECT p.category, SUM(s.quantity * p.price) AS total_sales FROM [Products] p INNER JOIN Sales s ON p.product_id = s.product_id GROUP BY p.category;"
+}
+```
+
+**Example 3**:
+**DBMS Provider**: MySQL  
+**Natural Language Query**: "List all employees who joined after January 1, 2020.""
+**Tables and Columns**:
+```
+Employees: employee_id, first name, last name, join date
+
+```
+Generated:
+```json
+{
+  "comments": [
+    "The date format is adjusted to MySQL's standard format.",
+    "Assumes 'join date' is stored in a DATE type column.",
+    "Column names with spaces are enclosed in backticks for MySQL compatibility."
+  ],
+  "query": "SELECT employee_id, `first name`, `last name` FROM Employees WHERE `join date` > '2020-01-01';"
 }
 ```
 

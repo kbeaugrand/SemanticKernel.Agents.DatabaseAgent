@@ -16,7 +16,6 @@ public class QueryRelevancyEvaluator
 {
     private readonly Kernel kernel;
 
-#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
     private KernelFunction ExtractQuestion => KernelFunctionFactory.CreateFromPrompt(new EmbeddedPromptProvider().ReadPrompt("QuestionExtraction"), new OpenAIPromptExecutionSettings
     {
         Temperature = 9.99999993922529E-09,
@@ -24,7 +23,6 @@ public class QueryRelevancyEvaluator
         Seed = 0L,
         ResponseFormat = "json_object",
     }, "ExtractQuestion");
-#pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
     public QueryRelevancyEvaluator(Kernel kernel)
     {
@@ -42,12 +40,20 @@ public class QueryRelevancyEvaluator
             });
 
         var evaluation = JsonSerializer.Deserialize<QueryRelevancyEvaluation>(result.GetValue<string>()!)!;
+        var embeddedQueries = new List<string>
+        {
+            prompt
+        };
+
+        embeddedQueries.AddRange(evaluation.Questions);
 
         IList<ReadOnlyMemory<float>> embeddings = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
-                                                                .GenerateEmbeddingsAsync([prompt, evaluation.Question], kernel)
+                                                                .GenerateEmbeddingsAsync(embeddedQueries, kernel)
                                                                     .ConfigureAwait(false);
 
-        return TensorPrimitives.CosineSimilarity(embeddings.First().Span, embeddings.Last().Span);
+        var promptEmbedding = embeddings.First();
+
+        return embeddings.Skip(1).Select(c => TensorPrimitives.CosineSimilarity(promptEmbedding.Span, c.Span)).Max();
     }
 
     internal static (IChatCompletionService service, PromptExecutionSettings?) GetChatCompletionService(Kernel kernel, KernelArguments? arguments)

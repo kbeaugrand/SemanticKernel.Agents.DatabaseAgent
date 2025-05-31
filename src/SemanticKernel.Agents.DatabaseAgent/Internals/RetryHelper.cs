@@ -23,6 +23,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Internals
                 }
                 catch (Exception ex)
                 {
+                  
                     if (i == count - 1)
                     {
                         (loggerFactory ?? NullLoggerFactory.Instance)

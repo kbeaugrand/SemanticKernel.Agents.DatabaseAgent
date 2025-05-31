@@ -126,6 +126,7 @@ internal static class AgentKernelFactory
 
         _ = kernelBuilder.Services.AddSingleton<IPromptProvider, EmbeddedPromptProvider>();
 
+
         return kernelBuilder
                      .AddTextEmbeddingFromConfiguration(configuration, kernelSettings.Embedding, loggerFactory)
                      .AddCompletionServiceFromConfiguration(configuration, kernelSettings.Completion, loggerFactory)
