@@ -14,15 +14,24 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 
 ## Models Tested
 
-| Model Name      | NL 2 SQL  | Quality Insurance |
-|-----------------|:---------:|:----------------:|
-| gpt-4o-mini     | ✅        | ✅               |
-| devstral        | ✅        | ✅               |
-| phi4            | ✅        | ⚠️ (WIP)         |
-| qwen2-5-coder   | ✅        | ⚠️ (WIP)         |
-| qwen3-8b        | ⚠️ (WIP)  | ⚠️ (WIP)         |
-| llama3-3        | ✅        | ⚠️ (WIP)         |
-| llama4          | ✅        | ⚠️ (WIP)         |
+| Model Name          | NL 2 SQL  | Quality Insurance | Score  | Speed (avg time/op.)   |
+|---------------------|:---------:|:----------------:|:-------:|:----------------------:|
+| gpt-4o-mini         | ✅        | ✅               |   90%  |     Fast (~3sec)       |
+| phi4:14b            | ✅        | ✅               |   90%  |     Slow (~10sec)      |
+| llama4:scout        | ✅        | ✅               |   90%  |     Slow (~10sec)      |
+| gpt-4.1-mini        | ✅        | ✅               |   80%  |     Fast (~3sec)       |
+| devstral:24b        | ✅        | ✅               |   80%  |     Slow (~10sec)      |
+| qwen2.5-coder:7b    | ⚠️ (WIP)  | ⚠️ (WIP)         |   50%  |     Fast (~3sec)       |
+| qwen3:8b            | ⚠️ (WIP)  | ⚠️ (WIP)         |   50%  |     Slow (~10sec)      |
+
+> Note: current score is a personal evaluation regarding the test cases with Northwind database and a set of queries.
+>       development is firstly focused on the gpt-4o-mini model, which is the most performant and accurate model for NL2SQL tasks.
+>       for the evaluation, the TopP and Temperature parameters are set to 0.1, which is the recommended setting.
+
+**DICLAIMER**
+
+Even if the model is marked as tested, it does not mean that it will work for all queries. 
+Furthermore, **using LLM agents might lead to risks such as unintended data exposure, security vulnerabilities, and inefficient query execution, potentially compromising system integrity and compliance requirements.**
 
 ## Getting Started
 
