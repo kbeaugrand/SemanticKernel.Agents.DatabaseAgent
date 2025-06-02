@@ -77,6 +77,13 @@ internal sealed class DatabasePlugin
 
             await foreach (var relatedTable in relatedTables)
             {
+                if (relatedTable.Score < this._options.MinScore)
+                {
+                    this._log.LogInformation("Skipping table {tableName} with score {score} below threshold {minScore}",
+                        relatedTable.Record.TableName, relatedTable.Score, this._options.MinScore);
+                    continue;
+                }
+
                 tableDefinitionsSb.AppendLine(relatedTable.Record.Description);
                 tableDefinitionsSb.AppendLine();
                 tableDefinitionsSb.AppendLine("---");

@@ -9,4 +9,6 @@ public sealed class DatabasePluginOptions
     public double? Temperature { get; set; } = .1E-9;
 
     public double? TopP { get; set; } = .1E-9;
+
+    public double? MinScore { get; set; } = 0.5;
 }
