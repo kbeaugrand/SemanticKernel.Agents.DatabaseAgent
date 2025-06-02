@@ -6,7 +6,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Internals
     internal static class RetryHelper
     {
         internal static async Task<T> Try<T>(Func<Exception?, Task<T>> func, 
-            int count = 3, 
+            int count = 5, 
             ILoggerFactory loggerFactory = null!, 
             CancellationToken? cancellationToken = null)
         {
