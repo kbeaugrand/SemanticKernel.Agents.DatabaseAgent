@@ -31,6 +31,7 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 **DICLAIMER**
 
 Even if the model is marked as tested, it does not mean that it will work for all queries. 
+
 Furthermore, **using LLM agents might lead to risks such as unintended data exposure, security vulnerabilities, and inefficient query execution, potentially compromising system integrity and compliance requirements.**
 
 ## Getting Started
