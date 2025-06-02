@@ -88,4 +88,4 @@ jobs:
           ## Nomic Embedding Models via Ollama
           SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
           SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
-          SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:latest
+          SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:v1.5
