@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.VectorData;
@@ -45,7 +46,7 @@ internal sealed class DatabasePlugin
             Temperature = this._options.Temperature,
             TopP = this._options.TopP,
             Seed = 0,
-            ResponseFormat = "json_object"
+            ResponseFormat = AIJsonUtilities.CreateJsonSchema(typeof(WriteSQLQueryResponse))
         },
         templateFormat: "handlebars",
         promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
@@ -96,10 +97,10 @@ internal sealed class DatabasePlugin
 
             using var dataTable = await RetryHelper.Try<DataTable>(async (e) =>
             {
-                sqlQuery = await GetSQLQueryStringAsync(kernel, 
-                                                        prompt, tableDefinitions, 
-                                                        cancellationToken: cancellationToken, 
-                                                        previousSQLException: e, 
+                sqlQuery = await GetSQLQueryStringAsync(kernel,
+                                                        prompt, tableDefinitions,
+                                                        cancellationToken: cancellationToken,
+                                                        previousSQLException: e,
                                                         previousSQLQuery: sqlQuery)
                                             .ConfigureAwait(false);
 
@@ -129,7 +130,7 @@ internal sealed class DatabasePlugin
                 return await QueryExecutor.ExecuteSQLAsync(connection, sqlQuery, this._loggerFactory, cancellationToken)
                                                          .ConfigureAwait(false);
             }, count: 3, _loggerFactory, cancellationToken)
-                .ConfigureAwait(false);            
+                .ConfigureAwait(false);
 
             var result = MarkdownRenderer.Render(dataTable);
 

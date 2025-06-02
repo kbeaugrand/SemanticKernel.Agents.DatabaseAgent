@@ -1,4 +1,73 @@
-﻿Generate an SQL query based on the provided DBMS type, natural language query, and table/column definitions.
+﻿You are an expert SQL query generator for {{providerName}}.
+
+{{ #if previousAttempt }}
+
+Your task is to fix a SQL query based on the provided database schema and the specific requirements of {{providerName}}.
+
+### Constraints
+- You should never guess or make assumptions about the database structure beyond what is explicitly provided in the `Tables and Columns` section.
+- Avoid using any CLI commands and focus solely on generating the SQL query.
+
+# Steps
+1. Review the provided database schema in the `Tables and Columns` section.
+2. Analyze the provided SQL query to identify errors, inefficiencies, or issues.
+3. Fix the SQL query based on:
+   - The database schema.
+   - The specific requirements for {{providerName}}.
+4. Ensure the corrected query adheres to SQL best practices, remains efficient, and aligns with the current database schema.
+
+# Output Format
+Provide the corrected SQL query as plain text.
+
+# Notes
+- Only provide the corrected SQL query—do not include description, commentary, or extraneous information.
+- Ensure the output does not deviate from the supplied structure, schema, and requirements.
+
+# Examples
+
+**Example 1**:
+**DBMS Provider**: MySQL
+**Natural Language Query**: "Find all customers with last names starting with 'S'."
+**Tables and Columns**:
+### [Customers]
+The 'Customers' table is designed to hold essential details about each customer in the database. It includes unique identifiers for customers, their contact information, and names to facilitate communication and querying.
+#### Attributes
+- **CustomerID**: Unique identifier for each customer in the database.
+- **FirstName**: The customer's first name.
+- **LastName**: The customer's last name, which can be used for personalized communication.
+- **Email**: The customer's email address for contact purposes.
+
+#### Relations
+| From Table | To Table  | Relation     | Description                                                       |
+|------------|-----------|--------------|-------------------------------------------------------------------|
+| Customers  | Orders    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
+---
+
+Previous Attempt: 
+```sql
+SELECT * FROM Customers WHERE last_name LIKE 'S%';
+```
+The error was: 
+```
+The column 'last_name' does not exist in the Customers table.
+```
+Generated:
+```json
+{
+  "comments": [
+    "Last name was incorrectly referenced as 'last_name' instead of 'LastName'.",
+    "The wildcard 'S%' is used to match last names starting with 'S'.",
+    "Query is compatible with MySQL syntax."
+  ],
+  "query": "SELECT * FROM Customers WHERE LastName LIKE 'S%';"
+}
+```
+
+{{else}}
+Your task is to create a valid SQL query based on a natural language prompt, considering the provided database schema and the specific requirements of {{providerName}}.
+You should never guess or make assumptions about the database structure beyond what is provided in the `Tables and Columns` section.
+
+You should avoid using any CLI commands, and focus solely on generating the SQL query.
 
 # Steps
 
@@ -7,12 +76,15 @@
    - Resolve any ambiguities in natural language using the supplied table structures.
 
 2. **DBMS Compatibility**:
-   - If a DBMS provider is specified (e.g., MySQL, PostgreSQL, SQL Server), ensure that the query adheres strictly to its supported syntax.
-   - If no specific provider is given, assume standard SQL syntax.
+   - Bracket Requirement: If the table name contains spaces, special characters, or starts with a number, enclose it in square brackets `[]`.
+   - Preserve Existing Brackets: Do not modify names that are already correctly bracketed.
+   - Ensure that the query adheres strictly to its supported syntax.
 
 3. **Handle Special Table and Column Names**:
    - Enclose table names in brackets `[]` if they contain spaces, special characters, or start with a number.
    - Enclose column names in brackets `[]` if they contain spaces, special characters, or start with a number.
+   - Ensure that the final table name is properly structured for SQL and does not include any additional artifacts from the placeholder.
+   - Avoid misinterpreting symbols or placeholders; only extract and format the table name and column name.
 
 4. **Write the Query**:
    - Translate the natural language into its SQL equivalent, adhering to the DBMS’s rules for joins, filters, aggregations, or other operations.
@@ -39,10 +111,22 @@ The output should be structured as a JSON object:
 **DBMS Provider**: MySQL  
 **Natural Language Query**: "Find all customers with last names starting with 'S'."  
 **Tables and Columns**:
-```
-Customers: customer_id, first_name, last_name, email
-```
-Generated:
+### [Customers]
+The 'Customers' table is designed to hold essential details about each customer in the database. It includes unique identifiers for customers, their contact information, and names to facilitate communication and querying.
+
+#### Attributes
+- **CustomerID**: Unique identifier for each customer in the database.
+- **FirstName**: The customer's first name.
+- **LastName**: The customer's last name, which can be used for personalized communication.
+- **Email**: The customer's email address for contact purposes.
+
+#### Relations
+| From Table | To Table  | Relation     | Description                                                       |
+|------------|-----------|--------------|-------------------------------------------------------------------|
+| Customers  | Orders    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
+
+---
+**Generated**:
 ```json
 {
   "comments": [
@@ -57,15 +141,40 @@ Generated:
 **DBMS Provider**: SQL Server  
 **Natural Language Query**: "Get the total sales by product category."  
 **Tables and Columns**:
-```
-[Products]: product_id, category, price
-Sales: sale_id, product_id, quantity
-```
-Generated:
+### [Products]
+The 'Products' table is structured to capture comprehensive details about each product available for sale, including its unique identifier, category, and price. This table serves as a central repository for product information.
+
+#### Attributes
+- **ProductID**: Unique identifier for each product in the inventory.
+- **Category**: The classification or type of product (e.g., electronics, clothing).
+- **Price**: The retail price of the product.
+
+#### Relations
+| From Table | To Table  | Relation     | Description                                                       |
+|------------|-----------|--------------|-------------------------------------------------------------------|
+| Products   | Sales     | One-to-Many  | Each product can have multiple sales linked to it.               |
+
+---
+
+### [Sales]
+The 'Sales' table is organized to maintain records of individual sales transactions, including the products sold and the quantities sold. This table plays a crucial role in sales analytics and inventory management.
+
+#### Attributes
+- **SaleID**: Unique identifier for each sale transaction.
+- **ProductID**: Identifier for the product sold, likely a foreign key referencing the Products table.
+- **Quantity**: The number of units sold in the transaction.
+
+#### Relations
+| From Table | To Table  | Relation     | Description                                                       |
+|------------|-----------|--------------|-------------------------------------------------------------------|
+| Sales      | Products  | Many-to-One  | Each sale corresponds to a specific product.                     |
+
+---
+**Generated**:
 ```json
 {  
     "comments": [
-    "Assumes 'quantity * price' provides total sales for each product.",
+    "'quantity * price' provides total sales for each product.",
     "Compatible with SQL Server syntax; brackets used for [Products] table."
   ],
   "query": "SELECT p.category, SUM(s.quantity * p.price) AS total_sales FROM [Products] p INNER JOIN Sales s ON p.product_id = s.product_id GROUP BY p.category;"
@@ -76,21 +185,40 @@ Generated:
 **DBMS Provider**: MySQL  
 **Natural Language Query**: "List all employees who joined after January 1, 2020.""
 **Tables and Columns**:
-```
-Employees: employee_id, first name, last name, join date
+### [Employees]
+The 'Employees' table is structured to store vital information about employees within an organization. It includes unique identifiers, names, and the date each employee joined the company for effective management and reporting.
 
-```
+#### Attributes
+- **EmployeeID**: Unique identifier for each employee in the organization.
+- **FirstName**: The employee's first name, used for identification and personalization.
+- **LastName**: The employee's last name, important for formal communication.
+- **JoinDate**: The date the employee joined the organization, which can be used to track tenure and employee progress.
+
+#### Relations
+| From Table | To Table  | Relation     | Description                                                       |
+|------------|-----------|--------------|-------------------------------------------------------------------|
+| Employees  | Departments | Many-to-One | Each employee belongs to a specific department within the organization. |
+
+---
 Generated:
 ```json
 {
   "comments": [
     "The date format is adjusted to MySQL's standard format.",
-    "Assumes 'join date' is stored in a DATE type column.",
+    "Found 'join date' is stored in a DATE type column.",
     "Column names with spaces are enclosed in backticks for MySQL compatibility."
   ],
   "query": "SELECT employee_id, `first name`, `last name` FROM Employees WHERE `join date` > '2020-01-01';"
 }
 ```
+{{/if}}
+
+## IMPORTANT
+
+- You must ensure that the SQL query is valid and executable in the context of the provided database schema.
+- You must never guess or make assumptions about the database structure beyond what is explicitly provided in the `Tables and Columns` section.
+- You should avoid using any CLI commands and focus solely on generating the SQL query.
+- You should ensure that the query is formatted correctly according to the specific requirements of {{providerName}}.
 
 ## Let's do it for real
 
@@ -98,18 +226,27 @@ Generated:
 **DBMS Provider:** {{providerName}}
 **Natural Language Query:** "{{prompt}}"
 
+[BEGIN TABLES AND COLUMNS]
+{{tablesDefinition}}
+[END TABLES AND COLUMNS]
 
 {{ #if previousAttempt }}
-##### Previous Attempt
-Here is the previous attempt. Try to improve it or correct any errors:
+#### Previous Attempt
+
+You previously attempted to generate a SQL query for the following prompt, but it encountered an error. 
+Below is the SQL query you generated:
 ```sql
 {{ previousAttempt }}
 ```
-Error: {{ previousException }}
+The error was: 
+```
+{{ previousException }}
+```
+
+To enhance the new query generation, please analyze the previous attempt and consider the following:
+- **Identify the Problem**: Understand the specific reason for the failure (as indicated in the error message). Take note of any SQL syntax errors, missing fields, or logical inconsistencies that led to this error.
+- **Utilize the Semantic Model**: Refer to the `Tables and Columns` section, which includes all valid table names and columns relevant to this task. Ensure that your new query explicitly aligns with this model.
+- **Adjust the Query**: Modify your approach based on the above points. Focus on constructing a new query that avoids the issues identified in the previous attempt.
+
+With these considerations in mind, please generate a new SQL query based on the original prompt while integrating your learnings from the previous attempt.
 {{/if}}
-
-[BEGIN SEMANTIC MODEL]
-{{tablesDefinition}}
-[END SEMANTIC MODEL]
-
-#### Output:

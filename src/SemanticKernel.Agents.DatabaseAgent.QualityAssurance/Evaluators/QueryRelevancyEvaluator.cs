@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
@@ -21,7 +22,7 @@ public class QueryRelevancyEvaluator
         Temperature = 9.99999993922529E-09,
         TopP = 9.99999993922529E-09,
         Seed = 0L,
-        ResponseFormat = "json_object",
+        ResponseFormat = AIJsonUtilities.CreateJsonSchema(typeof(QueryRelevancyEvaluation)),
     }, "ExtractQuestion");
 
     public QueryRelevancyEvaluator(Kernel kernel)
