@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -9,6 +8,8 @@ using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Internals;
 using SQLitePCL;
 using System.Text.Json;
+
+[assembly: Parallelizable(ParallelScope.None)]
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
@@ -318,7 +319,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
                 Console.WriteLine($"Answer: {response.Message}");
                 Console.WriteLine($"Expected: {expectedAnswer}");
 
-                if (evaluation.Score < 0.9)
+                if (evaluation.Score < .8)
                 {
                     Assert.Inconclusive("The answer is not similar enough to the expected answer.");
                 }

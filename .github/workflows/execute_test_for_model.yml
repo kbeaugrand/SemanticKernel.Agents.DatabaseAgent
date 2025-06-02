@@ -12,11 +12,16 @@ on:
       embedding:
         required: true
         type: string
+      continue-on-error:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   test:
     runs-on: ubuntu-latest
     name: Test ${{ inputs.tag }}
+    continue-on-error: ${{ inputs.continue-on-error || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -44,6 +49,10 @@ jobs:
           SERVICES__GPT4OMINI__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
           SERVICES__GPT4OMINI__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
           SERVICES__GPT4OMINI__DEPLOYMENT: gpt-4o-mini
+          SERVICES__GPT41MINI__TYPE: AzureOpenAI
+          SERVICES__GPT41MINI__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
+          SERVICES__GPT41MINI__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
+          SERVICES__GPT41MINI__DEPLOYMENT: gpt-4.1-mini
           SERVICES__TEXTEMBEDDINGADA002__TYPE: AzureOpenAI
           SERVICES__TEXTEMBEDDINGADA002__ENDPOINT: ${{ secrets.AZUREOPENAI_ENDPOINT }}
           SERVICES__TEXTEMBEDDINGADA002__APIKEY: ${{ secrets.AZUREOPENAI_APIKEY }}
