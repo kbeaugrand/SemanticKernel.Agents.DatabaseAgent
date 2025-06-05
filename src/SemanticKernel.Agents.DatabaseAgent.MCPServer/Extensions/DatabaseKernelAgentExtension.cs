@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
-using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
+using ModelContextProtocol.Protocol;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {
@@ -44,13 +44,11 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                     webAppBuilder.Logging
                         .AddConsole();
 
+                    webAppBuilder.Services.AddMcpServer((options) => BindMcpServerOptions(agent, options));
+
                     var app = webAppBuilder.Build();
 
-                    app.MapMcp(configureOptionsAsync: (context, options, CancellationToken) =>
-                    {
-                        BindMcpServerOptions(agent, options);
-                        return Task.CompletedTask;
-                    });
+                    app.MapMcp();
 
                     return app;
                 default:
