@@ -7,7 +7,7 @@ updates:
       interval: "daily"
   # Maintain dependencies for NuGet packages
   - package-ecosystem: "nuget"
-    directory: "/"
+    directory: "/src"
     schedule:
       interval: "daily"
     ignore:
