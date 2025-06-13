@@ -93,7 +93,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
 
     /// <inheritdoc/>
     [Obsolete("Use InvokeAsync with AgentThread instead.")]
-    public override IAsyncEnumerable<ChatMessageContent> InvokeAsync(
+    protected override IAsyncEnumerable<ChatMessageContent> InvokeAsync(
         ChatHistory history,
         KernelArguments? arguments = null,
         Kernel? kernel = null,
@@ -142,7 +142,7 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
 
     /// <inheritdoc/>
     [Obsolete("Use InvokeStreamingAsync with AgentThread instead.")]
-    public override IAsyncEnumerable<StreamingChatMessageContent> InvokeStreamingAsync(
+    protected override IAsyncEnumerable<StreamingChatMessageContent> InvokeStreamingAsync(
         ChatHistory history,
         KernelArguments? arguments = null,
         Kernel? kernel = null,
