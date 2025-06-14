@@ -12,6 +12,7 @@ using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.Data;
 using System.Data.Common;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -31,7 +32,17 @@ public static class DatabaseAgentFactory
 
     public static async Task<DatabaseKernelAgent> CreateAgentAsync(
             Kernel kernel,
-            ILoggerFactory loggingFactory,
+            ILoggerFactory? loggingFactory = null,
+            CancellationToken? cancellationToken = null)
+    {
+        return await CreateAgentAsync(kernel, update: false, loggingFactory, cancellationToken)
+                        .ConfigureAwait(false);
+    }
+
+    public static async Task<DatabaseKernelAgent> CreateAgentAsync(
+            Kernel kernel,
+            bool? update = false,
+            ILoggerFactory? loggingFactory = null,
             CancellationToken? cancellationToken = null)
     {
         var vectorStore = kernel.Services.GetService<VectorStoreCollection<Guid, TableDefinitionSnippet>>();
@@ -54,11 +65,18 @@ public static class DatabaseAgentFactory
         await agentStore.EnsureCollectionExistsAsync()
                          .ConfigureAwait(false);
 
-        return await BuildAgentAsync(kernel, loggingFactory, cancellationToken ?? CancellationToken.None)
+        return await BuildAgentAsync(kernel,
+            update,
+            loggingFactory,
+            cancellationToken ?? CancellationToken.None)
                             .ConfigureAwait(false);
     }
 
-    private static async Task<DatabaseKernelAgent> BuildAgentAsync(Kernel kernel, ILoggerFactory loggingFactory, CancellationToken cancellationToken)
+    private static async Task<DatabaseKernelAgent> BuildAgentAsync(
+        Kernel kernel,
+        bool? update = false,
+        ILoggerFactory? loggingFactory = null,
+        CancellationToken? cancellationToken = null)
     {
         var agentKernel = kernel.Clone();
 
@@ -83,7 +101,7 @@ public static class DatabaseAgentFactory
         loggingFactory.CreateLogger<DatabaseKernelAgent>()
             .LogInformation("Creating a new agent definition.");
 
-        var tableDescriptions = await MemorizeAgentSchema(kernel, loggingFactory, cancellationToken);
+        var tableDescriptions = await MemorizeAgentSchema(kernel, update ?? false, loggingFactory, cancellationToken ?? CancellationToken.None);
 
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
 
@@ -130,7 +148,7 @@ public static class DatabaseAgentFactory
                                                         .ConfigureAwait(false);
 
         await kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
-                        .UpsertAsync(agentDefinition, cancellationToken)
+                        .UpsertAsync(agentDefinition, cancellationToken ?? CancellationToken.None)
                         .ConfigureAwait(false);
 
         return new DatabaseKernelAgent()
@@ -142,32 +160,17 @@ public static class DatabaseAgentFactory
         };
     }
 
-    private static async Task<string> MemorizeAgentSchema(Kernel kernel, ILoggerFactory loggerFactory, CancellationToken cancellationToken)
+    private static async Task<string> MemorizeAgentSchema(Kernel kernel, bool update, ILoggerFactory loggerFactory, CancellationToken cancellationToken)
     {
         var stringBuilder = new StringBuilder();
 
-        var descriptions = GetTablesDescription(kernel, GetTablesAsync(kernel, cancellationToken), loggerFactory, cancellationToken)
+        var descriptions = GetTablesDescription(kernel, update, GetTablesAsync(kernel, cancellationToken), loggerFactory, cancellationToken)
                                                                 .ConfigureAwait(false);
 
         var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
         await foreach (var (tableName, definition, description, dataSample) in descriptions)
         {
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
-
-            await kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
-                            .UpsertAsync(new TableDefinitionSnippet
-                            {
-                                Key = Guid.NewGuid(),
-                                TableName = tableName,
-                                Definition = definition,
-                                Description = description,
-                                SampleData = dataSample,
-                                TextEmbedding = await embeddingTextGenerator.GenerateEmbeddingAsync(description, cancellationToken: cancellationToken)
-                                                                                                    .ConfigureAwait(false)
-                            })
-                            .ConfigureAwait(false);
-
             stringBuilder.AppendLine(description);
         }
 
@@ -216,7 +219,7 @@ public static class DatabaseAgentFactory
         }
     }
 
-    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, IAsyncEnumerable<string> tables, ILoggerFactory loggerFactory, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<(string tableName, string tableDefinition, string tableDescription, string dataSample)> GetTablesDescription(Kernel kernel, bool update, IAsyncEnumerable<string> tables, ILoggerFactory loggerFactory, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
@@ -231,6 +234,8 @@ public static class DatabaseAgentFactory
             {
                 { "providerName", connection.GetProviderName() }
             };
+
+        var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
         StringBuilder sb = new StringBuilder();
 
@@ -271,7 +276,7 @@ public static class DatabaseAgentFactory
                 }
             }
 
-            if (existingRecord is not null)
+            if (existingRecord is not null && !update)
             {
                 yield return (tableName!, existingRecord.Record.Definition!, existingRecord.Record.Description!, existingRecord.Record.SampleData!);
                 continue;
@@ -290,7 +295,7 @@ public static class DatabaseAgentFactory
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
-                 previousSQLQuery = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!).Query;
+                previousSQLQuery = JsonSerializer.Deserialize<WriteSQLQueryResponse>(definition.GetValue<string>()!).Query;
 
                 logger.LogDebug("Generated table structure for {TableName}: {Query}", tableName, previousSQLQuery);
 
@@ -319,7 +324,7 @@ public static class DatabaseAgentFactory
                 return MarkdownRenderer.Render(await QueryExecutor.ExecuteSQLAsync(connection, previousSQLQuery, null, cancellationToken)
                                                 .ConfigureAwait(false));
             }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);          
+                .ConfigureAwait(false);
 
             logger.LogDebug("Table data extract for {TableName}: {Extract}", tableName, tableExtract);
 
@@ -352,6 +357,21 @@ public static class DatabaseAgentFactory
                 """;
 
             logger.LogDebug("Generated table description for {TableName}: {Description}", tableName, description);
+
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(description));
+
+            await kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
+                            .UpsertAsync(new TableDefinitionSnippet
+                            {
+                                Key = Guid.NewGuid(),
+                                TableName = tableName,
+                                Definition = tableDefinition,
+                                Description = description,
+                                SampleData = tableExtract,
+                                TextEmbedding = await embeddingTextGenerator.GenerateEmbeddingAsync(description, cancellationToken: cancellationToken)
+                                                                                                    .ConfigureAwait(false)
+                            })
+                            .ConfigureAwait(false);
 
             yield return (tableName, tableDefinition, description, tableExtract)!;
         }
