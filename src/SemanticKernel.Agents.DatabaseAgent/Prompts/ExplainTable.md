@@ -1,4 +1,6 @@
-﻿Generate a natural language description explaining the purpose of a database table based on its column names and types.
+﻿You are an expert of {{providerName}}.
+
+You should generate a natural language description explaining the purpose of a database table based on its column names and types.
 
 ## Steps
 
@@ -20,6 +22,10 @@ The output should be a **short paragraph** in natural language. The description 
 - Begin with a statement clearly indicating the table's likely purpose.
 - Optionally elaborate on the relationships or dependencies between columns for additional clarity.
 - Avoid excessive technical jargon unless essential to the task.
+
+## Important
+
+You should always enclose the table name and column names with the correct quoting style for the {{providerName}} provider even if it is unnecessary for the table name or column names. This is to ensure that the output is compatible with the {{providerName}}'s syntax.
 
 ### Json schema
 
@@ -58,16 +64,51 @@ Table Definition:
 ```
 
 **Output**:
-
+{{ #if (equals providerName "Unknown Provider") }}
 ```json
 {
   "tableName": "Book",
   "attributes": "- **Book_ID** (primary key): Unique identifier for the book.\n- **Title**: Title of the book.\n- **Author**: Author of the book.\n- **Publication_Year**: Year of publication for the book.\n- **Genre**: Literary genre of the book.\n- **ISBN**: ISBN code of the book.\n\n",
-  "recordSample:"| Book_ID | Title                     | Author                     | Publication_Year | Genre             | ISBN                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
+  "recordSample:"| Book_ID| Title                     | Author                     | Publication_Year | Genre             | ISBN                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
   "definition":"This simplified model focuses on managing books in a library. It highlights the key information needed to catalog and search for books."
   "relations": "| From Table | To Table | Relation     | Description                                                         |\n|------------|----------|--------------|---------------------------------------------------------------------|\n| Book       | Author   | Many-to-One  | Each book is written by one author, but an author can write multiple books. |\n| Book       | Genre    | Many-to-One  | Each book belongs to one genre, but a genre can have multiple books. |",
 }       
 ```
+{{/if}}
+{{ #if (equals providerName "MySQL") }}
+```json
+{
+  "tableName": "`Book`",
+  "attributes": "- **Book_ID** (primary key): Unique identifier for the book.\n- **Title**: Title of the book.\n- **Author**: Author of the book.\n- **Publication_Year**: Year of publication for the book.\n- **Genre**: Literary genre of the book.\n- **ISBN**: ISBN code of the book.\n\n",
+  "recordSample:"| `Book_ID`| `Title`                     | `Author`                     | `Publication_Year` | `Genre`             | `ISBN`                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
+  "definition":"This simplified model focuses on managing books in a library. It highlights the key information needed to catalog and search for books."
+  "relations": "| From Table | To Table | Relation     | Description                                                         |\n|------------|----------|--------------|---------------------------------------------------------------------|\n| `Book`       | `Author`   | Many-to-One  | Each book is written by one author, but an author can write multiple books. |\n| `Book`       | `Genre`    | Many-to-One  | Each book belongs to one genre, but a genre can have multiple books. |",
+}       
+```
+{{/if}}
+{{ #if (or (equals providerName "PostgreSQL") (equals providerName "Oracle")) }}
+```json
+{
+  "tableName": "\"Book\"",
+  "attributes": "- **Book_ID** (primary key): Unique identifier for the book.\n- **Title**: Title of the book.\n- **Author**: Author of the book.\n- **Publication_Year**: Year of publication for the book.\n- **Genre**: Literary genre of the book.\n- **ISBN**: ISBN code of the book.\n\n",
+  "recordSample:"| \"Book_ID\"| \"Title\"                     | \"Author\"                     | \"Publication_Year\" | \"Genre\"             | \"ISBN\"                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
+  "definition":"This simplified model focuses on managing books in a library. It highlights the key information needed to catalog and search for books."
+  "relations": "| From Table | To Table | Relation     | Description                                                         |\n|------------|----------|--------------|---------------------------------------------------------------------|\n| "\Book\"       | \"Author\"   | Many-to-One  | Each book is written by one author, but an author can write multiple books. |\n| \"Book\"       | \"Genre\"    | Many-to-One  | Each book belongs to one genre, but a genre can have multiple books. |",
+}       
+```
+{{/if}}
+{{ #if (or (equals providerName "SQL Server") (equals providerName "SQLite")) }}
+```json
+{
+  "tableName": "[Book]",
+  "attributes": "- **Book_ID** (primary key): Unique identifier for the book.\n- **Title**: Title of the book.\n- **Author**: Author of the book.\n- **Publication_Year**: Year of publication for the book.\n- **Genre**: Literary genre of the book.\n- **ISBN**: ISBN code of the book.\n\n",
+  "recordSample:"| [Book_ID]| [Title]                     | [Author]                     | [Publication_Year] | [Genre]             | [ISBN]                |\n|---------|---------------------------|----------------------------|-------------------|-------------------|---------------------|\n| 1       | The Little Prince         | Antoine de Saint-Exupéry   | 1943              | Fiction           | 978-2-07-061275-8   |\n| 2       | 1984                      | George Orwell              | 1949              | Science Fiction   | 978-0-452-28423-4   |\n| 3       | The Great Gatsby          | F. Scott Fitzgerald        | 1925              | Fiction           | 978-0-7432-7356-5   |",
+  "definition":"This simplified model focuses on managing books in a library. It highlights the key information needed to catalog and search for books."
+  "relations": "| From Table | To Table | Relation     | Description                                                         |\n|------------|----------|--------------|---------------------------------------------------------------------|\n| [Book]       | [Author]   | Many-to-One  | Each book is written by one author, but an author can write multiple books. |\n| [Book]       | [Genre]    | Many-to-One  | Each book belongs to one genre, but a genre can have multiple books. |",
+}       
+```
+{{/if}}
+
 ---
 
 If the context or purpose is unclear, explicitly note this in the response.
@@ -78,14 +119,14 @@ Ensure the table name and columns are clearly defined in the output without any 
 **Input**:  
 ```
 Table Name:
-{{$tableName}}
+{{tableName}}
 ```
 ```
 Table Definition:  
-{{$tableDefinition}}
+{{tableDefinition}}
 ```
 ```
 Table extract:  
-{{$tableDataExtract}}
+{{tableDataExtract}}
 ```
 **Output**: 

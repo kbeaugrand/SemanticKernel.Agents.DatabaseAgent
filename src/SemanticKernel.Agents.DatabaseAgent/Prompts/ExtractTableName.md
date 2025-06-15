@@ -11,7 +11,7 @@ Extract the table name from a given input, ensuring it is properly formatted for
 
 1. Extract the content inside the input.
 2. Inspect the extracted table name for spaces, special characters, or if it begins with a number.
-3. Apply brackets `[]` around the name only if it meets the criteria listed above.
+3. Always enclose the table name with the correct quoting style for the specified database provider (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server).
 4. Validate against existing bracket formatting. Do not add brackets if the name is already correctly bracketed.
 5. Return the final table name as a JSON object.
 
@@ -89,7 +89,7 @@ Return a JSON object formatted as:
 ```json
 {
    "thinking": "The table name does not require brackets as it is valid without them.",
-   "tableName": "ValidTableName"
+   "tableName": "[ValidTableName]"
 }
 ```
 
