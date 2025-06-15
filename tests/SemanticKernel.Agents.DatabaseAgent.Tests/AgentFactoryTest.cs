@@ -36,8 +36,8 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
             var loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddConsole();
-                builder.SetMinimumLevel(LogLevel.Debug);
+                builder.AddConfiguration(configuration.GetSection("Logging"));
+                builder.AddProvider(new TestContextLoggerProvider());
             });
 
             this.kernel = AgentKernelFactory.ConfigureKernel(configuration, loggerFactory);

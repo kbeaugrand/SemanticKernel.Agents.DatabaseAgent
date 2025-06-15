@@ -125,7 +125,7 @@ internal static class AgentKernelFactory
         }
 
         _ = kernelBuilder.Services.AddSingleton<IPromptProvider, EmbeddedPromptProvider>();
-
+        _ = kernelBuilder.Services.AddSingleton(loggerFactory);
 
         return kernelBuilder
                      .AddTextEmbeddingFromConfiguration(configuration, kernelSettings.Embedding, loggerFactory)
