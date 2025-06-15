@@ -7,6 +7,7 @@ public class AgentPromptConstants
     public const string AgentNameGenerator = nameof(AgentNameGenerator);
     public const string ExplainTable = nameof(ExplainTable);
     public const string WriteSQLQuery = nameof(WriteSQLQuery);
+    public const string RewriteUserQuery = nameof(RewriteUserQuery);
     public const string ExtractTableName = nameof(ExtractTableName);
 }
 

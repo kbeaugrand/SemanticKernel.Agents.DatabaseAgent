@@ -27,6 +27,7 @@
     <EmbeddedResource Include="Prompts\AgentDescriptionGenerator.md" />
     <EmbeddedResource Include="Prompts\ExtractTableName.md" />
     <EmbeddedResource Include="Prompts\ExplainTable.md" />
+    <EmbeddedResource Include="Prompts\RewriteUserQuery.md" />
     <EmbeddedResource Include="Prompts\WriteSQLQuery.md" />
   </ItemGroup>
 
