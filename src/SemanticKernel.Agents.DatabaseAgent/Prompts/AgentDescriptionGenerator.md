@@ -23,7 +23,6 @@ Tables managed:
 ```json
 {
   "description": ""Manage customer orders, products, and profiles to facilitate the online sales process.\n### Relationships\nEach order is linked to a corresponding customer and one or more products.\n### Examples of actions supported\nSearch for orders, update product inventory, retrieve and manage customer details.",
-	
 }
 ```
 [END OF EXAMPLE]
@@ -37,7 +36,8 @@ Tables managed:
 # Let's go! 🚀
 
 **Input:**  
+Expected agent's name: {{$expectedName}}
 Tables managed:
-Agent Description: {{$tableDefinitions}}
+{{$tableDefinitions}}
 
 **Output:**
