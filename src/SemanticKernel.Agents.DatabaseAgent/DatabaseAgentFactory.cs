@@ -284,7 +284,7 @@ public static class DatabaseAgentFactory
             {
                 var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"Show the current structure of '{tableName}'" },
+                    { "prompt", $"Extract the structure of {tableName} by listing the column attributes, including the column name, data type, maximum length, and default value." },
                     { "previousAttempt", previousSQLQuery },
                     { "previousException", e },
                 }, cancellationToken)
