@@ -34,6 +34,8 @@ jobs:
       - run: dotnet test --no-build --verbosity normal
         working-directory: ./src/
         env:
+          LOGGING__LOGLEVEL__DEFAULT: DEBUG
+
           DATABASE__CONNECTIONSTRING: ${{ secrets.DATABASE__CONNECTIONSTRING }}
                     
           KERNEL__COMPLETION: ${{ inputs.completion }}
@@ -43,6 +45,7 @@ jobs:
           MEMORY__MAXTOKENS: 2000
           MEMORY__TEMPERATURE: 0.1
           MEMORY__TOPP: 0.1
+          MEMORY__MINSCORE: 0.5
 
           ## Azure OpenAI Service
           SERVICES__GPT4OMINI__TYPE: AzureOpenAI
@@ -93,3 +96,4 @@ jobs:
           SERVICES__NOMICEMBEDTEXT__TYPE: Ollama
           SERVICES__NOMICEMBEDTEXT__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
           SERVICES__NOMICEMBEDTEXT__MODELID: nomic-embed-text:v1.5
+
