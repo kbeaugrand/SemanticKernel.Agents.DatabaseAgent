@@ -61,6 +61,8 @@ internal sealed class DatabasePlugin
     public async Task<string> ExecuteQueryAsync(Kernel kernel,
                                                 [Description("The user query in natural language.")]
                                                 string prompt,
+                                                [Description("The original query, used for debugging purposes.")]
+                                                string originalQuery,
                                                 CancellationToken cancellationToken)
     {
         try
@@ -112,7 +114,7 @@ internal sealed class DatabasePlugin
 
                 this._log.LogInformation("SQL query generated: {sqlQuery}", sqlQuery);
 
-                var queryExecutionContext = new QueryExecutionContext(kernel, prompt, tableDefinitions, sqlQuery, cancellationToken);
+                var queryExecutionContext = new QueryExecutionContext(kernel, originalQuery, tableDefinitions, sqlQuery, cancellationToken);
 
                 (bool isQueryExecutionFiltered, string filterMessage) = await InvokeFiltersOrQueryAsync(kernel.GetAllServices<IQueryExecutionFilter>().ToList(),
                                          _ =>

@@ -3,6 +3,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Services;
 using SemanticKernel.Agents.DatabaseAgent;
+using SemanticKernel.Agents.DatabaseAgent.Internals;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -282,11 +283,24 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
     {
         kernel ??= this.Kernel;
 
+        var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
+        var rewriteQuery = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.RewriteUserQuery), PromptExecutionSettingsHelper.GetPromptExecutionSettings<RewriteQueryResponse>(), functionName: AgentPromptConstants.ExtractTableName);
+
+        var rewrittenQuery = await rewriteQuery.InvokeAsync(kernel, new KernelArguments
+        {
+            { "query", history.Last(c => c.Role == AuthorRole.User).Content! }
+        }, cancellationToken: cancellationToken);
+
+        var rewrittenQueryContent = JsonSerializer.Deserialize<RewriteQueryResponse>(rewrittenQuery.GetValue<string>()!);
+
+        Logger.LogDebug("Rewritten query: {RewrittenQuery}", rewrittenQueryContent!.Query);
+
         var plugin = kernel.CreatePluginFromType<DatabasePlugin>();
 
         var data = await plugin["ExecuteQuery"].InvokeAsync(kernel, new KernelArguments
                                                     {
-                                                        {"prompt", history.Last(c => c.Role == AuthorRole.User).Content! }
+                                                        {"originalQuery", history.Last(c => c.Role == AuthorRole.User).Content! },
+                                                        {"prompt", rewrittenQueryContent.Query }
                                                     }, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 

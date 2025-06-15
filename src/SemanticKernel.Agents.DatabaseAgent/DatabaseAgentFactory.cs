@@ -141,7 +141,7 @@ public static class DatabaseAgentFactory
 
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
 
-        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentDescriptionGenerator), GetPromptExecutionSettings<AgentDescriptionResponse>(), functionName: AgentPromptConstants.AgentDescriptionGenerator)
+        var agentDescription = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentDescriptionGenerator), PromptExecutionSettingsHelper.GetPromptExecutionSettings<AgentDescriptionResponse>(), functionName: AgentPromptConstants.AgentDescriptionGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "tableDefinitions", tableDescriptions },
@@ -155,7 +155,7 @@ public static class DatabaseAgentFactory
         FunctionResult agentName = null!;
         if (string.IsNullOrWhiteSpace(name))
         {
-            agentName = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentNameGenerator), GetPromptExecutionSettings<AgentNameRespone>(), functionName: AgentPromptConstants.AgentNameGenerator)
+            agentName = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentNameGenerator), PromptExecutionSettingsHelper.GetPromptExecutionSettings<AgentNameRespone>(), functionName: AgentPromptConstants.AgentNameGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
@@ -166,7 +166,7 @@ public static class DatabaseAgentFactory
                 .LogInformation("Agent name: {Name}", agentName.GetValue<string>()!);
         }
 
-        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentInstructionsGenerator), GetPromptExecutionSettings<AgentInstructionsResponse>(), functionName: AgentPromptConstants.AgentInstructionsGenerator)
+        var agentInstructions = await KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.AgentInstructionsGenerator), PromptExecutionSettingsHelper.GetPromptExecutionSettings<AgentInstructionsResponse>(), functionName: AgentPromptConstants.AgentInstructionsGenerator)
                                         .InvokeAsync(kernel, new KernelArguments
                                         {
                                             { "agentDescription", agentDescription.GetValue<string>()! }
@@ -230,7 +230,7 @@ public static class DatabaseAgentFactory
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(
-                executionSettings: GetPromptExecutionSettings<WriteSQLQueryResponse>(),
+                executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<WriteSQLQueryResponse>(),
                 templateFormat: "handlebars",
                 promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
                 promptTemplateFactory: new HandlebarsPromptTemplateFactory());
@@ -272,7 +272,7 @@ public static class DatabaseAgentFactory
         var connection = kernel.GetRequiredService<DbConnection>();
         var promptProvider = kernel.GetRequiredService<IPromptProvider>() ?? new EmbeddedPromptProvider();
         var sqlWriter = KernelFunctionFactory.CreateFromPrompt(
-                executionSettings: GetPromptExecutionSettings<WriteSQLQueryResponse>(),
+                executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<WriteSQLQueryResponse>(),
                 templateFormat: "handlebars",
                 promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
                 promptTemplateFactory: new HandlebarsPromptTemplateFactory());
@@ -346,7 +346,7 @@ public static class DatabaseAgentFactory
                 tableDefinitionSnippet = new TableDefinitionSnippet
                 {
                     Key = Guid.NewGuid(),
-                    TableName = item
+                    TableName = tableName
                 };
             }
 
@@ -355,7 +355,7 @@ public static class DatabaseAgentFactory
             {
                 var definition = await sqlWriter.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                 {
-                    { "prompt", $"Extract the structure of {tableName} by listing the column attributes, including the column name, data type, maximum length, and default value." },
+                    { "prompt", $"Extract the structure of table {tableName} by listing the column attributes, including the column name, data type, maximum length, and default value." },
                     { "previousAttempt", previousSQLQuery },
                     { "previousException", e },
                 }, cancellationToken)
@@ -396,7 +396,7 @@ public static class DatabaseAgentFactory
 
             var tableExplain = await RetryHelper.Try(async (e) =>
             {
-                var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments
+                var description = await tableDescriptionGenerator.InvokeAsync(kernel, new KernelArguments(defaultKernelArguments)
                                     {
                                         { "tableName", tableName },
                                         { "tableDefinition", tableDefinition },
