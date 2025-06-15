@@ -1,4 +1,6 @@
-﻿Extract the table name from a given input, ensuring it is properly formatted for use in SQL queries as per the guidelines below:
+﻿You are an expert in {{$providerName}} query formatting. Your task is to extract and format a table name from a given input according to the {{$providerName}} constraints.
+
+Extract the table name from a given input, ensuring it is properly formatted for use in SQL queries as per the guidelines below:
 
 - **Bracket Requirement**: If the table name contains spaces, special characters, or starts with a number, enclose it in square brackets `[]`.
 - **Preserve Existing Brackets**: Do not modify names that are already correctly bracketed.

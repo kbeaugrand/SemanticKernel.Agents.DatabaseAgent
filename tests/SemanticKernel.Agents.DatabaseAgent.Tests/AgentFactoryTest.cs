@@ -42,7 +42,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
 
             this.kernel = AgentKernelFactory.ConfigureKernel(configuration, loggerFactory);
 
-            this.agent = DatabaseAgentFactory.CreateAgentAsync(kernel, loggerFactory).Result;
+            this.agent = DatabaseAgentFactory.CreateAgentAsync(kernel, update: true, loggerFactory).Result;
         }
 
         [Test, Order(0)]
