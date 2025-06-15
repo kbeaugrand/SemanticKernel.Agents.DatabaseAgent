@@ -21,15 +21,6 @@ namespace SemanticKernel.Agents.DatabaseAgent;
 
 public static class DatabaseAgentFactory
 {
-    private static PromptExecutionSettings GetPromptExecutionSettings<T>() => new OpenAIPromptExecutionSettings
-    {
-        MaxTokens = 4096,
-        Temperature = .1E-9,
-        TopP = .1E-9,
-        Seed = 0L,
-        ResponseFormat = AIJsonUtilities.CreateJsonSchema(typeof(T)),
-    };
-
     public static async Task<DatabaseKernelAgent> CreateAgentAsync(
         Kernel kernel,
         ILoggerFactory? loggingFactory = null,
@@ -275,9 +266,15 @@ public static class DatabaseAgentFactory
                 executionSettings: GetPromptExecutionSettings<WriteSQLQueryResponse>(),
                 templateFormat: "handlebars",
                 promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
+                templateFormat: "handlebars",
                 promptTemplateFactory: new HandlebarsPromptTemplateFactory());
-        var extractTableName = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName), GetPromptExecutionSettings<ExtractTableNameResponse>(), functionName: AgentPromptConstants.ExtractTableName);
-        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable), GetPromptExecutionSettings<ExplainTableResponse>(), functionName: AgentPromptConstants.ExplainTable);
+        var extractTableName = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName), PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExtractTableNameResponse>(), functionName: AgentPromptConstants.ExtractTableName);
+        var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(
+            promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable),
+            templateFormat: "handlebars",
+            promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
+            executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExplainTableResponse>(),
+            functionName: AgentPromptConstants.ExplainTable);
         var defaultKernelArguments = new KernelArguments
             {
                 { "providerName", connection.GetProviderName() }

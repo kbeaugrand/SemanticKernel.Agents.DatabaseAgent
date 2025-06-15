@@ -29,7 +29,7 @@ Provide the corrected SQL query as plain text.
 **DBMS Provider**: MySQL
 **Natural Language Query**: "Find all customers with last names starting with 'S'."
 **Tables and Columns**:
-### [Customers]
+### `Customers`
 The 'Customers' table is designed to hold essential details about each customer in the database. It includes unique identifiers for customers, their contact information, and names to facilitate communication and querying.
 #### Attributes
 - **CustomerID**: Unique identifier for each customer in the database.
@@ -38,14 +38,14 @@ The 'Customers' table is designed to hold essential details about each customer 
 - **Email**: The customer's email address for contact purposes.
 
 #### Relations
-| From Table | To Table  | Relation     | Description                                                       |
-|------------|-----------|--------------|-------------------------------------------------------------------|
-| Customers  | Orders    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
+| From Table   | To Table    | Relation     | Description                                                       |
+|--------------|-------------|--------------|-------------------------------------------------------------------|
+| `Customers`  | `Orders`    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
 ---
 
 Previous Attempt: 
 ```sql
-SELECT * FROM Customers WHERE last_name LIKE 'S%';
+SELECT * FROM `Customers` WHERE `last_name` LIKE 'S%';
 ```
 The error was: 
 ```
@@ -59,7 +59,7 @@ Generated:
     "The wildcard 'S%' is used to match last names starting with 'S'.",
     "Query is compatible with MySQL syntax."
   ],
-  "query": "SELECT * FROM Customers WHERE LastName LIKE 'S%';"
+  "query": "SELECT * FROM `Customers` WHERE `LastName` LIKE 'S%';"
 }
 ```
 
@@ -111,7 +111,7 @@ The output should be structured as a JSON object:
 **DBMS Provider**: MySQL  
 **Natural Language Query**: "Find all customers with last names starting with 'S'."  
 **Tables and Columns**:
-### [Customers]
+### `Customers`
 The 'Customers' table is designed to hold essential details about each customer in the database. It includes unique identifiers for customers, their contact information, and names to facilitate communication and querying.
 
 #### Attributes
@@ -121,9 +121,9 @@ The 'Customers' table is designed to hold essential details about each customer 
 - **Email**: The customer's email address for contact purposes.
 
 #### Relations
-| From Table | To Table  | Relation     | Description                                                       |
-|------------|-----------|--------------|-------------------------------------------------------------------|
-| Customers  | Orders    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
+| From Table   | To Table    | Relation     | Description                                                       |
+|--------------|-------------|--------------|-------------------------------------------------------------------|
+| `Customers`  | `Orders`    | One-to-Many  | Each customer can have multiple orders linked to their account.   |
 
 ---
 **Generated**:
@@ -133,7 +133,7 @@ The 'Customers' table is designed to hold essential details about each customer 
     "The wildcard 'S%' is used to match last names starting with 'S'.",
     "Query is compatible with MySQL syntax."
   ],
-  "query": "SELECT * FROM Customers WHERE last_name LIKE 'S%';"
+  "query": "SELECT * FROM `Customers` WHERE `last_name` LIKE 'S%';"
 }
 ```
 
@@ -150,9 +150,9 @@ The 'Products' table is structured to capture comprehensive details about each p
 - **Price**: The retail price of the product.
 
 #### Relations
-| From Table | To Table  | Relation     | Description                                                       |
-|------------|-----------|--------------|-------------------------------------------------------------------|
-| Products   | Sales     | One-to-Many  | Each product can have multiple sales linked to it.               |
+| From Table   | To Table    | Relation     | Description                                                       |
+|--------------|-------------|--------------|-------------------------------------------------------------------|
+| [Products]   | [Sales]     | One-to-Many  | Each product can have multiple sales linked to it.               |
 
 ---
 
@@ -165,9 +165,9 @@ The 'Sales' table is organized to maintain records of individual sales transacti
 - **Quantity**: The number of units sold in the transaction.
 
 #### Relations
-| From Table | To Table  | Relation     | Description                                                       |
-|------------|-----------|--------------|-------------------------------------------------------------------|
-| Sales      | Products  | Many-to-One  | Each sale corresponds to a specific product.                     |
+| From Table   | To Table    | Relation     | Description                                                       |
+|--------------|-------------|--------------|-------------------------------------------------------------------|
+| [Sales]      | [Products]  | Many-to-One  | Each sale corresponds to a specific product.                     |
 
 ---
 **Generated**:
@@ -195,9 +195,9 @@ The 'Employees' table is structured to store vital information about employees w
 - **JoinDate**: The date the employee joined the organization, which can be used to track tenure and employee progress.
 
 #### Relations
-| From Table | To Table  | Relation     | Description                                                       |
-|------------|-----------|--------------|-------------------------------------------------------------------|
-| Employees  | Departments | Many-to-One | Each employee belongs to a specific department within the organization. |
+| From Table   | To Table      | Relation     | Description                                                             |
+|--------------|---------------|--------------|-------------------------------------------------------------------------|
+| `Employees`  | `Departments` | Many-to-One  | Each employee belongs to a specific department within the organization. |
 
 ---
 Generated:
@@ -208,7 +208,7 @@ Generated:
     "Found 'join date' is stored in a DATE type column.",
     "Column names with spaces are enclosed in backticks for MySQL compatibility."
   ],
-  "query": "SELECT employee_id, `first name`, `last name` FROM Employees WHERE `join date` > '2020-01-01';"
+  "query": "SELECT `employee_id`, `first name`, `last name` FROM `Employees` WHERE `join date` > '2020-01-01';"
 }
 ```
 {{/if}}
