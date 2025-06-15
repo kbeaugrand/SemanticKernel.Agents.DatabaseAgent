@@ -36,8 +36,18 @@ jobs:
       completion: DEVSTRAL
       embedding: NOMICEMBEDTEXT
 
-  phi4:
+  magistral:
     needs: devstral
+    uses: ./.github/workflows/execute_test_for_model.yml
+    secrets: inherit 
+    with:
+      continue-on-error: true
+      tag: magistral
+      completion: MAGISTRAL
+      embedding: NOMICEMBEDTEXT
+
+  phi4:
+    needs: magistral
     uses: ./.github/workflows/execute_test_for_model.yml
     secrets: inherit 
     with:

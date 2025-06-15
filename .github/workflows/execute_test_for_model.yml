@@ -71,6 +71,10 @@ jobs:
           SERVICES__DEVSTRAL__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
           SERVICES__DEVSTRAL__MODELID: devstral:24b
 
+          SERVICES__MAGISTRAL__TYPE: Ollama
+          SERVICES__MAGISTRAL__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__MAGISTRAL__MODELID: magistral:24b
+
           ## Phi Models via Ollama
           SERVICES__PHI4__TYPE: Ollama
           SERVICES__PHI4__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
