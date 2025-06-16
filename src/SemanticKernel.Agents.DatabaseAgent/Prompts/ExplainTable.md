@@ -75,7 +75,7 @@ Table Definition:
 }       
 ```
 {{/if}}
-{{ #if (equals providerName "MySQL") }}
+{{ #if (or (equals providerName "MySQL") (equals providerName "Simba Spark ODBC Driver")) }}
 ```json
 {
   "tableName": "`Book`",
@@ -97,7 +97,7 @@ Table Definition:
 }       
 ```
 {{/if}}
-{{ #if (or (equals providerName "SQL Server") (equals providerName "SQLite")) }}
+{{ #if (or (or (equals providerName "SQL Server") (equals providerName "SQLite")) (equals providerName "OLE DB")) }}
 ```json
 {
   "tableName": "[Book]",
