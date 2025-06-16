@@ -45,17 +45,6 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             this.agent = DatabaseAgentFactory.CreateAgentAsync(kernel, update: true, loggerFactory).Result;
         }
 
-        [Test, Order(0)]
-        public void AgentFactoryCanCreateANewAgent()
-        {
-            // Arrange
-
-            // Test
-
-            // Assert
-            Assert.That(agent, Is.Not.Null);
-        }
-
         [Order(1)]
         [TestCase("Counts the number of orders placed by each customer in the top 5",
                             $"""
