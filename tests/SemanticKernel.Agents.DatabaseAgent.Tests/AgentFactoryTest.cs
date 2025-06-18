@@ -46,6 +46,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
         }
 
         [Order(1)]
+        [Category("NL2SQL")]
         [TestCase("Counts the number of orders placed by each customer in the top 5",
                             $"""
                             | CustomerID | OrderCount |
