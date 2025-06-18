@@ -40,6 +40,8 @@ Return a JSON object formatted as:
 - If domain-specific parameters (e.g., date ranges, filters) are unclear, reformulate with general language but add placeholders (e.g., `from [start_date] to [end_date]`).
 - Avoid making assumptions that could change the user's intent.
 
-# Let's do it!
+# Let's do it for real
+
+Now, forget the previous examples schema and focus on the task at hand. 
 
 **User Query**: "{{$query}}"

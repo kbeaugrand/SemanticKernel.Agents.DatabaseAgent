@@ -33,7 +33,9 @@ Tables managed:
 - If tables are interdependent (e.g., via foreign keys), clearly articulate the relationships.
 - Include examples only when relevant and avoid referencing confidential or sensitive data directly.
 
-# Let's go! 🚀
+# Let's do it for real
+
+Now, forget the previous examples schema and focus on the task at hand. 
 
 **Input:**  
 Expected agent's name: {{$expectedName}}

@@ -206,7 +206,9 @@ Return a JSON object formatted as:
 ```
 {{/if}}
 
-# Let's do this!
+# Let's do it for real
+
+Now, forget the previous examples schema and focus on the task at hand. 
 
 Extract the table name from: 
 **Input**: 

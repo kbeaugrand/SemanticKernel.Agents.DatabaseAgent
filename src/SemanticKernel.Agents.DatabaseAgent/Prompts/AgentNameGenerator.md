@@ -47,7 +47,9 @@ Agent Description: A playful chatbot designed to engage children in learning gra
 - If no specific details are provided, default to creating names that are functional and versatile.
 - For whimsical, thematic, or creative agents, feel free to incorporate imaginative elements into the name.
 
-# Let's generate some creative agent names! 🚀
+# Let's do it for real
+
+Now, forget the previous examples schema and focus on the task at hand. 
 
 **Input:**  
 Agent Description: {{$agentDescription}}
