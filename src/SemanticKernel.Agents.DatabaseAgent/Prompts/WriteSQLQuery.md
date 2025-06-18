@@ -393,17 +393,18 @@ Generated:
 - You should avoid using any CLI commands and focus solely on generating the SQL query.
 - You should ensure that the query is formatted correctly according to the specific requirements of {{providerName}}.
 
-## Let's do it for real
+# Let's do it for real
 
-Now forget previous example schemas and focus on generating a new SQL query based on the provided natural language prompt and the new database schema.
+Now, forget the previous examples schema and focus on the task at hand. 
+Your goal is to generate a valid SQL query based on the provided natural language prompt and the database schema defined in the `Tables and Columns` section.
 
 #### Input:
-
-**Natural Language Query:** "{{prompt}}"
 
 [BEGIN TABLES AND COLUMNS]
 {{tablesDefinition}}
 [END TABLES AND COLUMNS]
+
+**Natural Language Query:** "{{prompt}}"
 
 {{ #if previousAttempt }}
 #### Previous Attempt

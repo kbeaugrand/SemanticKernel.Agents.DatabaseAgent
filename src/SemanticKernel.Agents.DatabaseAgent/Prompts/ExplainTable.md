@@ -114,7 +114,9 @@ Table Definition:
 If the context or purpose is unclear, explicitly note this in the response.
 Ensure the table name and columns are clearly defined in the output without any alteration of the original column names or types.
 
-# Let's Practice!
+# Let's do it for real
+
+Now, forget the previous examples schema and focus on the task at hand. 
 
 **Input**:  
 ```
