@@ -8,6 +8,6 @@ namespace SemanticKernel.Agents.DatabaseAgent
         public string Thinking { get; set; } = string.Empty;
 
         [JsonPropertyName("tableName")]
-        public string? TableName { get; set; }
+        public string TableName { get; set; } = string.Empty;
     }
 }

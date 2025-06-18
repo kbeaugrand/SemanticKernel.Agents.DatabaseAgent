@@ -267,7 +267,12 @@ public static class DatabaseAgentFactory
                 promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.WriteSQLQuery),
                 templateFormat: "handlebars",
                 promptTemplateFactory: new HandlebarsPromptTemplateFactory());
-        var extractTableName = KernelFunctionFactory.CreateFromPrompt(promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName), PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExtractTableNameResponse>(), functionName: AgentPromptConstants.ExtractTableName);
+        var extractTableName = KernelFunctionFactory.CreateFromPrompt(
+            promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
+            templateFormat: "handlebars",
+            promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
+            executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExtractTableNameResponse>(), 
+            functionName: AgentPromptConstants.ExtractTableName);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(
             promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable),
             templateFormat: "handlebars",
@@ -298,7 +303,16 @@ public static class DatabaseAgentFactory
                                     }, cancellationToken: cancellationToken)
                                     .ConfigureAwait(false);
 
-                 return JsonSerializer.Deserialize<ExtractTableNameResponse>(tableNameResponse.GetValue<string>()!)!.TableName;
+
+                 var response = JsonSerializer.Deserialize<ExtractTableNameResponse>(tableNameResponse.GetValue<string>()!);
+                 
+                 if(response is null || string.IsNullOrWhiteSpace(response.TableName))
+                 {
+                     throw new InvalidOperationException("Failed to extract table name from the item.");
+                 }
+
+                 return response.TableName;
+
              }, loggerFactory: loggerFactory!, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
