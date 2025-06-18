@@ -307,7 +307,7 @@ public static class DatabaseAgentFactory
             var existingRecordSearch = kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
                                                     .SearchAsync(await embeddingTextGenerator
                                                         .GenerateEmbeddingAsync(item)
-                                                        .ConfigureAwait(false), top: 1)
+                                                        .ConfigureAwait(false), top: 10)
                                                     .ConfigureAwait(false);
 
             TableDefinitionSnippet tableDefinitionSnippet = null!;
