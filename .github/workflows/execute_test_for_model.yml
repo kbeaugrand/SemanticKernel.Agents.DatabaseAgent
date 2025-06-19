@@ -68,6 +68,9 @@ jobs:
           SERVICES__QWEN38B__TYPE: Ollama
           SERVICES__QWEN38B__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
           SERVICES__QWEN38B__MODELID: qwen3:8b
+          SERVICES__QWEN330B__TYPE: Ollama
+          SERVICES__QWEN330B__ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          SERVICES__QWEN330B__MODELID: qwen3:30b-a3b
 
           ## Mistral Models via Ollama
           SERVICES__DEVSTRAL__TYPE: Ollama
