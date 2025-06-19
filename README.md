@@ -15,16 +15,18 @@ This built on top of the [Microsoft's Semantic Kernel](https://github.com/micros
 
 ## Models Tested
 
-| Model Name          | NL 2 SQL  | Quality Insurance |   Score    | Speed (avg time/op.)   |
-|---------------------|:---------:|:----------------:|:-----------:|:----------------------:|
-| gpt-4o-mini         | ✅        | ✅               |     90%    |     Fast (~3sec)       |
-| phi4:14b            | ✅        | ✅               |     90%    |     Slow (~10sec)      |
-| llama4:scout        | ✅        | ✅               |     90%    |     Slow (~10sec)      |
-| gpt-4.1-mini        | ✅        | ✅               |     80%    |     Fast (~3sec)       |
-| devstral:24b        | ✅        | ✅               |     80%    |     Slow (~10sec)      |
-| magistral:24b       | ⚠️ (WIP)  | ⚠️ (WIP)         |     70%    |     Slow (~10sec)      |
-| qwen2.5-coder:7b    | ⚠️ (WIP)  | ⚠️ (WIP)         |     50%    |     Fast (~3sec)       |
-| qwen3:8b            | ⚠️ (WIP)  | ⚠️ (WIP)         |     50%    |     Slow (~10sec)      |
+| Model Family | Model Name          | NL 2 SQL  | Quality Insurance |   Score    | Speed (avg time/op.)   |
+|--------------|---------------------|:---------:|:----------------:|:-----------:|:----------------------:|
+| OpenAI       | gpt-4.1-mini        | ✅        | ✅               |     100%   |     Fast (~3sec)       |
+| OpenAI       | gpt-4o-mini         | ✅        | ✅               |     90%    |     Fast (~3sec)       |
+| Phi          | phi4:14b            | ✅        | ✅               |     70%    |     Medium (~10sec)    |
+| Meta         | llama4:scout        | ✅        | ✅               |     70%    |     Medium (~10sec)    |
+| MistralAI    | magistral:24b       | ✅        | ✅               |     90%    |     Medium (~10sec)    |
+| MistralAI    | devstral:24b        | ✅        | ✅               |     70%    |     Medium (~10sec)    |
+| Qwen         | qwen3:30b-a3b       | ✅        | ✅               |     80%    |     Medium (~10sec)    |
+| Qwen         | qwen3:14b           | ⚠️ (WIP)  | ⚠️ (WIP)         |     50%    |     Medium (~10sec)    |
+| Qwen         | qwen3:8b            | ⚠️ (WIP)  | ⚠️ (WIP)         |     50%    |     Medium (~10sec)    |
+| Qwen         | qwen2.5-coder:7b    | ⚠️ (WIP)  | ⚠️ (WIP)         |     30%    |     Fast (~3sec)       |
 
 > Note: current score is a personal evaluation regarding the test cases with Northwind database and a set of queries.
 >       development is firstly focused on the gpt-4o-mini model, which is the most performant and accurate model for NL2SQL tasks.
