@@ -339,7 +339,13 @@ public sealed class DatabaseKernelAgent : ChatHistoryAgent
 
             try
             {
-                message.Content = JsonSerializer.Deserialize<AgentResponse>(message.Content!)!.Answer;
+                var agentResponse = JsonSerializer.Deserialize<AgentResponse>(message.Content!)!;
+                if (agentResponse == null || string.IsNullOrEmpty(agentResponse.Answer))
+                {
+                    Logger.LogWarning("Failed to deserialize agent response content. Content: {Content}", message.Content);
+                    continue;
+                }
+                message.Content = agentResponse.Answer;
             }
             catch (JsonException ex)
             {
