@@ -11,8 +11,8 @@ internal static class DBConnectionExtension
 
         return typeName switch
         {
-            string s when s.Contains("SqlClient", StringComparison.OrdinalIgnoreCase) => "SQL Server",
             string s when s.Contains("MySqlClient", StringComparison.OrdinalIgnoreCase) => "MySQL",
+            string s when s.Contains("SqlClient", StringComparison.OrdinalIgnoreCase) => "SQL Server",
             string s when s.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) => "PostgreSQL",
             string s when s.Contains("Oracle", StringComparison.OrdinalIgnoreCase) => "Oracle",
             string s when s.Contains("SQLite", StringComparison.OrdinalIgnoreCase) => "SQLite",
