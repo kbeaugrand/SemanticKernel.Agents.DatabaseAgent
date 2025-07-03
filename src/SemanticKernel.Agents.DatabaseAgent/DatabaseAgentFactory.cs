@@ -175,8 +175,8 @@ public static class DatabaseAgentFactory
             Instructions = JsonSerializer.Deserialize<AgentInstructionsResponse>(agentInstructions.GetValue<string>()!)!.Instructions
         };
 
-        agentDefinition.TextEmbedding = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
-                                                        .GenerateEmbeddingAsync(agentDefinition.Description)
+        agentDefinition.TextEmbedding = await kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>()
+                                                        .GenerateVectorAsync(agentDefinition.Description)
                                                         .ConfigureAwait(false);
 
         await kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
@@ -200,8 +200,6 @@ public static class DatabaseAgentFactory
         {
             var descriptions = GetTablesDescription(kernel, update, GetTablesAsync(kernel, cancellationToken), loggerFactory, cancellationToken)
                                                                     .ConfigureAwait(false);
-
-            var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 
             await foreach (var item in descriptions)
             {
@@ -285,7 +283,7 @@ public static class DatabaseAgentFactory
             };
 
         var tableVectorCollection = kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>();
-        var embeddingTextGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+        var embeddingTextGenerator = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
         StringBuilder sb = new StringBuilder();
 
@@ -320,7 +318,7 @@ public static class DatabaseAgentFactory
 
             var existingRecordSearch = kernel.GetRequiredService<VectorStoreCollection<Guid, TableDefinitionSnippet>>()
                                                     .SearchAsync(await embeddingTextGenerator
-                                                        .GenerateEmbeddingAsync(item)
+                                                        .GenerateVectorAsync(item)
                                                         .ConfigureAwait(false), top: 10)
                                                     .ConfigureAwait(false);
 
@@ -439,7 +437,7 @@ public static class DatabaseAgentFactory
             tableDefinitionSnippet.Definition = tableDefinition;
             tableDefinitionSnippet.Description = description;
             tableDefinitionSnippet.SampleData = tableExtract;
-            tableDefinitionSnippet.TextEmbedding = await embeddingTextGenerator.GenerateEmbeddingAsync(description, cancellationToken: cancellationToken)
+            tableDefinitionSnippet.TextEmbedding = await embeddingTextGenerator.GenerateVectorAsync(description, cancellationToken: cancellationToken)
                                                                                                 .ConfigureAwait(false);
 
             await tableVectorCollection

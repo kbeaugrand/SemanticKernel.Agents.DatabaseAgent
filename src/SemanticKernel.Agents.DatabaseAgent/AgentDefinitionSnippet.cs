@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.VectorData;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
 
 namespace SemanticKernel.Agents.DatabaseAgent
 {

@@ -68,9 +68,9 @@ internal sealed class DatabasePlugin
         try
         {
             var connection = kernel.GetRequiredService<DbConnection>();
-            var textEmbeddingService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+            var textEmbeddingService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
-            var embeddings = await textEmbeddingService.GenerateEmbeddingAsync(prompt, cancellationToken: cancellationToken)
+            var embeddings = await textEmbeddingService.GenerateVectorAsync(prompt, cancellationToken: cancellationToken)
                                                                         .ConfigureAwait(false);
 
             var relatedTables = this._vectorStore.SearchAsync(embeddings, top: this._options.TopK, cancellationToken: cancellationToken)
