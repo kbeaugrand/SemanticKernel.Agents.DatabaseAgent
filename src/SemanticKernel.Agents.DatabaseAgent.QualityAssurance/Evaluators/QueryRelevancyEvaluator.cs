@@ -48,9 +48,14 @@ public class QueryRelevancyEvaluator
 
         embeddedQueries.AddRange(evaluation.Questions);
 
-        IList<ReadOnlyMemory<float>> embeddings = await kernel.GetRequiredService<ITextEmbeddingGenerationService>()
-                                                                .GenerateEmbeddingsAsync(embeddedQueries, kernel)
-                                                                    .ConfigureAwait(false);
+        IList<ReadOnlyMemory<float>> embeddings = new List<ReadOnlyMemory<float>>();
+
+        foreach (var item in embeddedQueries)
+        {
+            embeddings.Add(await kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>()
+                                                                                    .GenerateVectorAsync(item)
+                                                                                    .ConfigureAwait(false));
+        }
 
         var promptEmbedding = embeddings.First();
 

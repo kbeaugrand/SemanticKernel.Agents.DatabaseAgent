@@ -59,10 +59,10 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                 case "AzureOpenAI":
                     var azureConfig = service.Get<AzureOpenAIConfig>();
 
-                    return builder.AddAzureOpenAITextEmbeddingGeneration(azureConfig.Deployment, azureConfig.Endpoint, azureConfig.APIKey);
+                    return builder.AddAzureOpenAIEmbeddingGenerator(azureConfig.Deployment, azureConfig.Endpoint, azureConfig.APIKey);
                 case "Ollama":
                     var ollamaConfig = service.Get<OllamaConfig>();
-                    return builder.AddOllamaTextEmbeddingGeneration(ollamaConfig.ModelId, new Uri(ollamaConfig.Endpoint), null);
+                    return builder.AddOllamaEmbeddingGenerator(ollamaConfig.ModelId, new Uri(ollamaConfig.Endpoint), null);
                 default:
                     throw new ArgumentException("Unknown service type");
             }

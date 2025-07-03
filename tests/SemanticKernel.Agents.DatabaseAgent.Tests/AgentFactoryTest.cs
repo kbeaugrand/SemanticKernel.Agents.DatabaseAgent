@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -189,7 +190,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.Tests
             // Arrange
             var evaluatorKernel = kernel.Clone();
 
-            var embeddingTextGenerator = evaluatorKernel.GetRequiredService<ITextEmbeddingGenerationService>();
+            var embeddingTextGenerator = evaluatorKernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 
             // Test
             var responses = agent.InvokeAsync([new ChatMessageContent { Content = question, Role = AuthorRole.User }], thread: null)
