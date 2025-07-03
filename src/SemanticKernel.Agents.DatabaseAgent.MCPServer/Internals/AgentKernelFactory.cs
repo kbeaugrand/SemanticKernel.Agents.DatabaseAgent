@@ -72,7 +72,7 @@ internal static class AgentKernelFactory
         loggerFactory.CreateLogger(nameof(AgentKernelFactory))
                 .LogInformation("Using memory kind {kind}", memorySettings!.Kind);
 
-        if (string.IsNullOrEmpty(memorySettings.PrefixCollectionName))
+        if (!string.IsNullOrEmpty(memorySettings.PrefixCollectionName))
         {
             memorySettings.PrefixCollectionName += "-";
         }
