@@ -10,4 +10,6 @@ internal class MemorySettings
     }
 
     public required StorageType Kind { get; set; }
+
+    public string PrefixCollectionName { get; set; } = "";
 }

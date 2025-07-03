@@ -72,27 +72,32 @@ internal static class AgentKernelFactory
         loggerFactory.CreateLogger(nameof(AgentKernelFactory))
                 .LogInformation("Using memory kind {kind}", memorySettings!.Kind);
 
+        if (string.IsNullOrEmpty(memorySettings.PrefixCollectionName))
+        {
+            memorySettings.PrefixCollectionName += "-";
+        }
+
         switch (memorySettings.Kind)
         {
             case MemorySettings.StorageType.Volatile:
-                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>("agent", options: new()
+                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, AgentDefinitionSnippet>($"{memorySettings.PrefixCollectionName}agent", options: new()
                 {
                     Definition = GetAgentStoreRecordDefinition()
                 });
-                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>("tables", options: new()
+                kernelBuilder.Services.AddInMemoryVectorStoreRecordCollection<Guid, TableDefinitionSnippet>($"{memorySettings.PrefixCollectionName}tables", options: new()
                 {
                     Definition = GetVectorStoreRecordDefinition()
                 });
                 break;
             case MemorySettings.StorageType.SQLite:
                 var sqliteSettings = memorySection.Get<SQLiteMemorySettings>()!;
-                kernelBuilder.Services.AddSqliteCollection<Guid, AgentDefinitionSnippet>("agent",
+                kernelBuilder.Services.AddSqliteCollection<Guid, AgentDefinitionSnippet>($"{memorySettings.PrefixCollectionName}agent",
                     sqliteSettings.ConnectionString,
                     options: new SqliteCollectionOptions()
                     {
                         Definition = GetAgentStoreRecordDefinition(sqliteSettings.Dimensions)
                     });
-                kernelBuilder.Services.AddSqliteCollection<Guid, TableDefinitionSnippet>("tables",
+                kernelBuilder.Services.AddSqliteCollection<Guid, TableDefinitionSnippet>($"{memorySettings.PrefixCollectionName}tables",
                     sqliteSettings.ConnectionString,
                     options: new SqliteCollectionOptions()
                     {
@@ -102,7 +107,7 @@ internal static class AgentKernelFactory
             case MemorySettings.StorageType.Qdrant:
                 var qdrantSettings = memorySection.Get<QdrantMemorySettings>()!;
 
-                kernelBuilder.Services.AddQdrantCollection<Guid, AgentDefinitionSnippet>("agent",
+                kernelBuilder.Services.AddQdrantCollection<Guid, AgentDefinitionSnippet>($"{memorySettings.PrefixCollectionName}agent",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
                             qdrantSettings.Https,
@@ -111,7 +116,7 @@ internal static class AgentKernelFactory
                             {
                                 Definition = GetAgentStoreRecordDefinition(qdrantSettings.Dimensions)
                             });
-                kernelBuilder.Services.AddQdrantCollection<Guid, TableDefinitionSnippet>("tables",
+                kernelBuilder.Services.AddQdrantCollection<Guid, TableDefinitionSnippet>($"{memorySettings.PrefixCollectionName}tables",
                             qdrantSettings.Host,
                             qdrantSettings.Port,
                             qdrantSettings.Https,

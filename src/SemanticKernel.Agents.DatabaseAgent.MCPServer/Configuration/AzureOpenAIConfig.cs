@@ -12,5 +12,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration
 
         [Required]
         public string APIKey { get;  set; }
+
+        public int TimeoutInSeconds { get; set; } = 60;
     }
 }

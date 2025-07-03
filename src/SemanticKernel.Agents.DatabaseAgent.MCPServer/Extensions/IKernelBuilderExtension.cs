@@ -1,14 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Azure.AI.OpenAI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using SemanticKernel.Agents.DatabaseAgent.MCPServer.Configuration;
+using System.ClientModel;
 
 namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 {
     internal static class IKernelBuilderExtension
     {
         internal static IKernelBuilder AddCompletionServiceFromConfiguration(this IKernelBuilder builder, IConfiguration configuration, string serviceName, ILoggerFactory loggerFactory)
-        {           
+        {
             var logger = loggerFactory.CreateLogger(nameof(IKernelBuilderExtension));
 
             logger.LogInformation("Adding completion service from configuration: {serviceName}", serviceName);
@@ -25,11 +27,18 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
             {
                 case "AzureOpenAI":
                     var azureConfig = service.Get<AzureOpenAIConfig>();
-                    return builder.AddAzureOpenAIChatCompletion(azureConfig.Deployment, azureConfig.Endpoint, azureConfig.APIKey);
+                    var client = new HttpClient();
+                    client.Timeout = TimeSpan.FromSeconds(azureConfig.TimeoutInSeconds);
+                    return builder.AddAzureOpenAIChatCompletion(azureConfig.Deployment, azureConfig.Endpoint, azureConfig.APIKey, httpClient: client);
 #pragma warning disable SKEXP0070 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                 case "Ollama":
                     var ollamaConfig = service.Get<OllamaConfig>();
-                    return builder.AddOllamaChatCompletion(ollamaConfig.ModelId, new Uri(ollamaConfig.Endpoint), null);
+                    var ollamaClient = new HttpClient()
+                    {
+                        BaseAddress = new Uri(ollamaConfig.Endpoint)
+                    };
+                    ollamaClient.Timeout = TimeSpan.FromSeconds(ollamaConfig.TimeoutInSeconds);
+                    return builder.AddOllamaChatCompletion(ollamaConfig.ModelId, httpClient: ollamaClient);
 #pragma warning restore SKEXP0070 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
                 default:
