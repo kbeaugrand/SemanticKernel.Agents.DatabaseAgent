@@ -46,7 +46,7 @@
 
   <ItemGroup>
 
-    <PackageReference Include="System.Numerics.Tensors" Version="9.0.7" />
+    <PackageReference Include="System.Numerics.Tensors" Version="9.0.8" />
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
