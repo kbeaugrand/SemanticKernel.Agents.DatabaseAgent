@@ -32,7 +32,7 @@ jobs:
                 latest=false
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Docker Login to ACR
       # You may pin to the exact commit or the version.
@@ -85,7 +85,7 @@ jobs:
         - SemanticKernel.Agents.DatabaseAgent.MCPServer
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
