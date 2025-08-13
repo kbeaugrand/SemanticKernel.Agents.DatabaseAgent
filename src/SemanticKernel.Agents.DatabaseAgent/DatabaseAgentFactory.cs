@@ -99,10 +99,10 @@ public static class DatabaseAgentFactory
         if (!string.IsNullOrWhiteSpace(name))
         {
 
-            existingDefinition = await kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
+            existingDefinition = kernel.GetRequiredService<VectorStoreCollection<Guid, AgentDefinitionSnippet>>()
                                             .GetAsync(a => a.AgentName == name, top: 1)
-                                            .FirstOrDefaultAsync(cancellationToken: cancellationToken ?? CancellationToken.None)
-                                            .ConfigureAwait(false);
+                                            .ToBlockingEnumerable()
+                                            .FirstOrDefault();
         }
         else
         {
