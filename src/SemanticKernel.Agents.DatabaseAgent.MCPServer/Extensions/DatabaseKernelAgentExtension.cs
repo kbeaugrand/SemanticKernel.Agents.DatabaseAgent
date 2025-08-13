@@ -44,7 +44,9 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                     webAppBuilder.Logging
                         .AddConsole();
 
-                    webAppBuilder.Services.AddMcpServer((options) => BindMcpServerOptions(agent, options));
+                    webAppBuilder.Services
+                            .AddMcpServer((options) => BindMcpServerOptions(agent, options))
+                            .WithHttpTransport(c => { });
 
                     var app = webAppBuilder.Build();
 
