@@ -91,6 +91,8 @@ To run the MCP server as a Docker image, you can use the following command:
 
 docker run -it --rm \
   -p 8080:5000 \
+  -e AGENT__TRANSPORT__KIND=Sse \
+  -e ASPNETCORE_URLS=http://+:5000 \
   -e DATABASE_PROVIDER=sqlite \
   -e DATABASE_CONNECTION_STRING="Data Source=northwind.db;Mode=ReadWrite" \
   -e MEMORY_KIND=Volatile \
@@ -107,6 +109,22 @@ docker run -it --rm \
   -e SERVICES_TEXTEMBEDDINGADA002_API_KEY=xxx \
   -e SERVICES_TEXTEMBEDDINGADA002_DEPLOYMENT=text-embedding-ada-002 \
   ghcr.io/kbeaugrand/database-mcp-server
+```
+
+Then you can configure your favorite MCP Client like Claude Desktop with this settings: 
+```json
+{
+  "mcpServers": {
+    "mcp-database-agent": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8080/sse",
+        "--allow-http"
+      ]
+    }
+  }
+}
 ```
 
 ### Behind the scenes
