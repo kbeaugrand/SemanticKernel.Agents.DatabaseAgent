@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -27,27 +27,27 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.59.0-alpha" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.59.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.SqliteVec" Version="1.59.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.59.0-preview" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.14" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.1.0-preview.14" />
-    <PackageReference Include="MySql.Data" Version="9.3.0" />
+    <PackageReference Include="MySql.Data" Version="9.4.0" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.9.0" />
-    <PackageReference Include="System.Data.Odbc" Version="9.0.7" />
-    <PackageReference Include="System.Data.OleDb" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.7" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.9.1" />
+    <PackageReference Include="System.Data.Odbc" Version="9.0.8" />
+    <PackageReference Include="System.Data.OleDb" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.8" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.1" />
     
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
