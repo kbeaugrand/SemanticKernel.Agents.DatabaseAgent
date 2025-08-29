@@ -28,31 +28,36 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
             {
                 case TransportSettings.TransportType.Stdio:
                     var builder = Host.CreateEmptyApplicationBuilder(settings: null);
-
                     var mcpServerBuilder = builder.Services
                         .AddMcpServer(options => BindMcpServerOptions(agent, options));
                     mcpServerBuilder.WithStdioServerTransport();
-
                     return builder.Build();
 
                 case TransportSettings.TransportType.Sse:
+                    // Legacy SSE support (can be removed if not needed)
                     var webAppOptions = new WebApplicationOptions();
                     configuration.Bind(webAppOptions);
-
                     var webAppBuilder = WebApplication.CreateBuilder(webAppOptions);
-
-                    webAppBuilder.Logging
-                        .AddConsole();
-
+                    webAppBuilder.Logging.AddConsole();
                     webAppBuilder.Services
-                            .AddMcpServer((options) => BindMcpServerOptions(agent, options))
-                            .WithHttpTransport(c => { });
-
+                        .AddMcpServer((options) => BindMcpServerOptions(agent, options))
+                        .WithHttpTransport(c => { });
                     var app = webAppBuilder.Build();
-
                     app.MapMcp();
-
                     return app;
+
+                case TransportSettings.TransportType.HttpStreamable:
+                    var streamableOptions = new WebApplicationOptions();
+                    configuration.Bind(streamableOptions);
+                    var streamableBuilder = WebApplication.CreateBuilder(streamableOptions);
+                    streamableBuilder.Logging.AddConsole();
+                    streamableBuilder.Services
+                        .AddMcpServer((options) => BindMcpServerOptions(agent, options))
+                        .WithStreamableHttpServerTransport(); // SDK method for streamable HTTP
+                    var streamableApp = streamableBuilder.Build();
+                    streamableApp.MapMcp();
+                    return streamableApp;
+
                 default:
                     throw new NotSupportedException($"Transport '{configuredTransport.Kind}' is not supported.");
             }

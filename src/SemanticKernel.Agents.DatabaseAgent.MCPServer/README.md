@@ -32,13 +32,20 @@ The following options are available
 
 ## Agent transport
 
+
 You can configure the transport options for the agent by setting the following options:
 
-`--agent:Transport:Kind`  
-    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Sse).  
-    - **Type**: `string`  
-    - **Default**: `Stdio`  
-    - **Example**: `--agent:Transport:Kind=Stdio`  
+`--agent:Transport:Kind`
+    - **Description**: Defines the kind of transport to be used for the agent (e.g., Stdio, Sse, HttpStreamable).
+    - **Type**: `string`
+    - **Default**: `Stdio`
+    - **Example**: `--agent:Transport:Kind=HttpStreamable`
+
+#### Migration Notes
+
+- **SSE is deprecated**: For modern streaming and bidirectional communication, use `HttpStreamable`.
+- **HttpStreamable**: Enables HTTP/2 or WebSocket-based streaming, supporting bidirectional messaging and improved browser compatibility.
+- **Legacy SSE**: Still available for backward compatibility, but not recommended for new deployments.
     
 #### Supported database providers
 
