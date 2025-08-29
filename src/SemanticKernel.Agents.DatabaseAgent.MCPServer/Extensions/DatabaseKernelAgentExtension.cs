@@ -34,7 +34,8 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                     return builder.Build();
 
                 case TransportSettings.TransportType.Sse:
-                    // Legacy SSE support (can be removed if not needed)
+                case TransportSettings.TransportType.HttpStreamable:
+                    // By default the SDK handles HttpStreamable and fall back to SSE in case the client doesn't support it.
                     var webAppOptions = new WebApplicationOptions();
                     configuration.Bind(webAppOptions);
                     var webAppBuilder = WebApplication.CreateBuilder(webAppOptions);
@@ -45,18 +46,6 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                     var app = webAppBuilder.Build();
                     app.MapMcp();
                     return app;
-
-                case TransportSettings.TransportType.HttpStreamable:
-                    var streamableOptions = new WebApplicationOptions();
-                    configuration.Bind(streamableOptions);
-                    var streamableBuilder = WebApplication.CreateBuilder(streamableOptions);
-                    streamableBuilder.Logging.AddConsole();
-                    streamableBuilder.Services
-                        .AddMcpServer((options) => BindMcpServerOptions(agent, options))
-                        .WithStreamableHttpServerTransport(); // SDK method for streamable HTTP
-                    var streamableApp = streamableBuilder.Build();
-                    streamableApp.MapMcp();
-                    return streamableApp;
 
                 default:
                     throw new NotSupportedException($"Transport '{configuredTransport.Kind}' is not supported.");
