@@ -5,11 +5,12 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.Embeddings;
 using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
+using Mosaik.Core;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
+using SemanticKernel.Reranker.BM25;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -73,21 +74,18 @@ internal sealed class DatabasePlugin
             var embeddings = await textEmbeddingService.GenerateVectorAsync(prompt, cancellationToken: cancellationToken)
                                                                         .ConfigureAwait(false);
 
-            var relatedTables = this._vectorStore.SearchAsync(embeddings, top: this._options.TopK, cancellationToken: cancellationToken)
-                   .ConfigureAwait(false);
+            var ranker = new BM25Reranker(supportedLanguages: [Language.English]);
+
+            var relatedTables = this._vectorStore.SearchAsync(embeddings, top: int.Min(this._options.TopK * 5, 100), cancellationToken: cancellationToken);
+
+            var ranked = ranker.RankAsync(prompt, relatedTables, r => r.Description, topN: this._options.TopK);
 
             var tableDefinitionsSb = new StringBuilder();
 
-            await foreach (var relatedTable in relatedTables)
+            await foreach (var relatedTable in ranked)
             {
-                if (relatedTable.Score < this._options.MinScore)
-                {
-                    this._log.LogInformation("Skipping table {tableName} with score {score} below threshold {minScore}",
-                        relatedTable.Record.TableName, relatedTable.Score, this._options.MinScore);
-                    continue;
-                }
 
-                tableDefinitionsSb.AppendLine(relatedTable.Record.Description);
+                tableDefinitionsSb.AppendLine(relatedTable.Result.Record.Description);
                 tableDefinitionsSb.AppendLine();
                 tableDefinitionsSb.AppendLine("---");
                 tableDefinitionsSb.AppendLine();
@@ -159,7 +157,7 @@ internal sealed class DatabasePlugin
             { "prompt", prompt },
             { "tablesDefinition", tablesDefinitions },
             { "previousAttempt", previousSQLQuery },
-            { "previousException", previousSQLException },
+            { "previousException", previousSQLException?.Message },
             { "providerName", kernel.GetRequiredService<DbConnection>().GetProviderName() }
         };
 

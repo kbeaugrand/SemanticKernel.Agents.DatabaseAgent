@@ -237,7 +237,7 @@ public static class DatabaseAgentFactory
             {
                 { "prompt", "List all tables" },
                 { "previousAttempt", previousSQLQuery },
-                { "previousException", e },
+                { "previousException", e?.Message },
             })
             .ConfigureAwait(false);
 
@@ -269,7 +269,7 @@ public static class DatabaseAgentFactory
             promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.ExtractTableName),
             templateFormat: "handlebars",
             promptTemplateFactory: new HandlebarsPromptTemplateFactory(),
-            executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExtractTableNameResponse>(), 
+            executionSettings: PromptExecutionSettingsHelper.GetPromptExecutionSettings<ExtractTableNameResponse>(),
             functionName: AgentPromptConstants.ExtractTableName);
         var tableDescriptionGenerator = KernelFunctionFactory.CreateFromPrompt(
             promptTemplate: promptProvider.ReadPrompt(AgentPromptConstants.ExplainTable),
@@ -303,8 +303,8 @@ public static class DatabaseAgentFactory
 
 
                  var response = JsonSerializer.Deserialize<ExtractTableNameResponse>(tableNameResponse.GetValue<string>()!);
-                 
-                 if(response is null || string.IsNullOrWhiteSpace(response.TableName))
+
+                 if (response is null || string.IsNullOrWhiteSpace(response.TableName))
                  {
                      throw new InvalidOperationException("Failed to extract table name from the item.");
                  }
@@ -365,7 +365,7 @@ public static class DatabaseAgentFactory
                 {
                     { "prompt", $"Extract the structure of table {tableName} by listing the column attributes, including the column name, data type, maximum length, and default value." },
                     { "previousAttempt", previousSQLQuery },
-                    { "previousException", e },
+                    { "previousException", e?.Message },
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -387,7 +387,7 @@ public static class DatabaseAgentFactory
                     { "prompt", $"Get the first 5 rows for '{tableName}'" },
                     { "tablesDefinition", tableDefinition },
                     { "previousAttempt", previousSQLQuery },
-                    { "previousException", e },
+                    { "previousException", e?.Message },
                 }, cancellationToken)
                     .ConfigureAwait(false);
 

@@ -416,7 +416,7 @@ Below is the SQL query you generated:
 ```
 The error was: 
 ```
-{{ previousException.Message }}
+{{ previousException }}
 ```
 
 To enhance the new query generation, please analyze the previous attempt and consider the following:

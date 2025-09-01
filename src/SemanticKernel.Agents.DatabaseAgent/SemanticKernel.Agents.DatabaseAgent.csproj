@@ -41,6 +41,7 @@
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.64.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.64.0" />
     <PackageReference Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.64.0" />
+    <PackageReference Include="SemanticKernel.Reranker.BM25" Version="1.0.1-beta03" />
     <PackageReference Include="Validation" Version="2.6.68" />
   </ItemGroup>
 
