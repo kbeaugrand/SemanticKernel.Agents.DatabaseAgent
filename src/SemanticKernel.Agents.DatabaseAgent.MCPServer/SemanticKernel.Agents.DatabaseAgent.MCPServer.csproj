@@ -44,6 +44,7 @@
     <PackageReference Include="MySql.Data" Version="9.4.0" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.9.1" />
+    <PackageReference Include="SemanticKernel.Reranker.BM25" Version="1.0.1-beta03" />
     <PackageReference Include="System.Data.Odbc" Version="9.0.8" />
     <PackageReference Include="System.Data.OleDb" Version="9.0.8" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.8" />
