@@ -54,7 +54,11 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 
         static void BindMcpServerOptions(DatabaseKernelAgent agent, McpServerOptions options)
         {
-            options.ServerInfo = new() { Name = agent.Name!, Version = "1.0.0" };
+            options.ServerInfo = new() {
+                Name = agent.Name!,
+                Version = "1.0.0"
+            };
+            options.ServerInstructions = agent.Description;
             options.Capabilities = new()
             {
                 Tools = new()
@@ -65,51 +69,79 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
                         {
                             Tools = [
                                 new Tool(){
-                                        Name = agent.Name!,
-                                        Description = agent.Description,
-                                        InputSchema = JsonSerializer.Deserialize<JsonElement>("""
-                                            {
-                                                "type": "object",
-                                                "properties": {
-                                                  "message": {
-                                                    "type": "string",
-                                                    "description": "The user query in natural language."
-                                                  }
-                                                },
-                                                "required": ["message"]
-                                            }
-                                            """),
-                                    }
+                                    Name= "Ask",
+                                    Description = "Asks a question to the database. The question should be written in natural language.",
+                                    InputSchema = JsonSerializer.Deserialize<JsonElement>("""
+                                        { "type": "object", "properties": { "query": { "type": "string", "description": "The question to ask the database." } }, "required": ["query"] }
+                                    """),
+                                },
+                                new Tool(){
+                                    Name = "ListTables",
+                                    Description = "Returns a list of all table names in the database.",
+                                    InputSchema = JsonSerializer.Deserialize<JsonElement>("""
+                                        { "type": "object", "properties": {}, "required": [] }
+                                    """),
+                                },
+                                new Tool(){
+                                    Name = "GetTableDefinition",
+                                    Description = "Returns the semantic definition of a specified table.",
+                                    InputSchema = JsonSerializer.Deserialize<JsonElement>("""
+                                        { "type": "object", "properties": { "tableName": { "type": "string", "description": "The name of the table." } }, "required": ["tableName"] }
+                                    """),
+                                }
                             ]
-
                         };
                     },
                     CallToolHandler = async (context, cancellationToken) =>
                     {
-                        if (!string.Equals(agent.Name, context.Params?.Name))
-                        {
-                            throw new InvalidOperationException($"Unknown tool: '{context.Params?.Name}'");
-                        }
-
-                        if (context.Params?.Arguments?.TryGetValue("message", out var message) is not true)
-                        {
-                            throw new InvalidOperationException("Missing required argument 'message'");
-                        }
-
-                        var responses = agent.InvokeAsync(new ChatMessageContent(AuthorRole.User, message.ToString()), thread: null)
-                                                .ConfigureAwait(false);
-
+                        var vectorStore = agent.Kernel.GetRequiredService<Microsoft.Extensions.VectorData.VectorStoreCollection<System.Guid, SemanticKernel.Agents.DatabaseAgent.TableDefinitionSnippet>>();
                         var callToolResponse = new CallToolResponse();
 
-                        await foreach (var item in responses)
+                        switch (context.Params?.Name)
                         {
-                            callToolResponse.Content.Add(new()
-                            {
-                                Type = "text",
-                                Text = item.Message.Content!
-                            });
-                        }
+                            case "Ask":
+                                if (context.Params?.Arguments?.TryGetValue("query", out var queryObj) != true)
+                                    throw new InvalidOperationException("Missing required argument 'query'");
+                                var query = queryObj.ToString();
 
+                                var responses = agent.InvokeAsync(new ChatMessageContent(AuthorRole.User, query), thread: null)
+                                                .ConfigureAwait(false);
+
+                                await foreach (var item in responses)
+                                {
+                                    callToolResponse.Content.Add(new()
+                                    {
+                                        Type = "text",
+                                        Text = item.Message.Content!
+                                    });
+                                }
+                                break;
+                            case "ListTables":
+                                var tables = new List<string>();
+                                await foreach (var record in vectorStore.GetAsync(x => true, top: int.MaxValue, cancellationToken: cancellationToken))
+                                {
+                                    tables.Add(record.TableName);
+                                }
+                                callToolResponse.Content.Add(new() { Type = "json", Text = JsonSerializer.Serialize(tables) });
+                                break;
+                            case "GetTableDefinition":
+                                if (context.Params?.Arguments?.TryGetValue("tableName", out var tableNameObj) != true)
+                                    throw new InvalidOperationException("Missing required argument 'tableName'");
+                                var tableName = tableNameObj.ToString();
+                                var found = false;
+                                await foreach (var record in vectorStore.GetAsync(x => x.TableName == tableName, top: int.MaxValue, cancellationToken: cancellationToken))
+                                {
+                                    callToolResponse.Content.Add(new() { Type = "json", Text = JsonSerializer.Serialize(record) });
+                                    found = true;
+                                    break;
+                                }
+                                if (!found)
+                                    throw new InvalidOperationException($"Table '{tableName}' not found.");
+                                break;
+
+                            default:
+                                throw new InvalidOperationException($"Unknown tool: '{context.Params?.Name}'");
+                        }
                         return callToolResponse;
                     }
                 }
