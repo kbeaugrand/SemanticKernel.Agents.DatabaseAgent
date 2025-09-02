@@ -17,7 +17,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 
             var service = configuration.GetSection($"services:{serviceName}");
 
-            if (service.Value is null)
+            if (!service.Exists())
             {
                 throw new ArgumentException($"Service configuration section is missing for {serviceName}");
             }
@@ -61,7 +61,7 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 
             var service = configuration.GetSection($"services:{serviceName}");
 
-            if (service.Value is null)
+            if (!service.Exists())
             {
                 throw new ArgumentException($"Service configuration section is missing for {serviceName}");
             }
