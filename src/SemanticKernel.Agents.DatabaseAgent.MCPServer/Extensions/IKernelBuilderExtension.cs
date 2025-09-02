@@ -17,10 +17,14 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 
             var service = configuration.GetSection($"services:{serviceName}");
 
+            if (!service.Exists())
+            {
+                throw new ArgumentException($"Service configuration section is missing for {serviceName}");
+            }
+
             if (string.IsNullOrEmpty(service["Type"]))
             {
-                logger.LogError("Service type is not specified for {serviceName}", serviceName);
-                return builder;
+                throw new ArgumentException($"Service type is not specified for {serviceName}");
             }
 
             switch (service["Type"])
@@ -57,10 +61,14 @@ namespace SemanticKernel.Agents.DatabaseAgent.MCPServer.Extensions
 
             var service = configuration.GetSection($"services:{serviceName}");
 
+            if (!service.Exists())
+            {
+                throw new ArgumentException($"Service configuration section is missing for {serviceName}");
+            }
+
             if (string.IsNullOrEmpty(service["Type"]))
             {
-                logger.LogError("Service type is not specified for {serviceName}", serviceName);
-                return builder;
+                throw new ArgumentException($"Service type is not specified for {serviceName}");
             }
 
             switch (service["Type"])
