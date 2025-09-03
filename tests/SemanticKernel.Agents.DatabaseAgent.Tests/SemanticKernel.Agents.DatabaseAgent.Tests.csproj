@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.8" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.64.0-preview" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.3.0-preview.4" />
     <PackageReference Include="NUnit" Version="4.4.0" />
     <PackageReference Include="NUnit.Analyzers" Version="4.10.0">
       <PrivateAssets>all</PrivateAssets>
