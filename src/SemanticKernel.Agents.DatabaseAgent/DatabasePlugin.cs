@@ -10,7 +10,7 @@ using Mosaik.Core;
 using SemanticKernel.Agents.DatabaseAgent.Extensions;
 using SemanticKernel.Agents.DatabaseAgent.Filters;
 using SemanticKernel.Agents.DatabaseAgent.Internals;
-using SemanticKernel.Reranker.BM25;
+using SemanticKernel.Rankers.BM25;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
