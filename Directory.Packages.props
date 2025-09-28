@@ -1,0 +1,64 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Test packages -->
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="NUnit" Version="4.4.0" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.10.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="5.1.0" />
+
+    <!-- Microsoft Extensions packages -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Polly" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.9" />
+
+    <!-- Semantic Kernel packages -->
+    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.64.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.64.0-alpha" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.64.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.SqliteVec" Version="1.64.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.64.0" />
+
+    <!-- Database packages -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="9.0.9" />
+    <PackageVersion Include="MySql.Data" Version="9.4.0" />
+    <PackageVersion Include="Npgsql" Version="9.0.3" />
+    <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.9.1" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
+    <PackageVersion Include="System.Data.Odbc" Version="9.0.8" />
+    <PackageVersion Include="System.Data.OleDb" Version="9.0.8" />
+
+    <!-- Other packages -->
+    <PackageVersion Include="Markdig" Version="0.42.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="0.3.0-preview.4" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="0.3.0-preview.4" />
+    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageVersion Include="SemanticKernel.Rankers.BM25" Version="1.3.1" />
+    <PackageVersion Include="SemanticKernel.Reranker.BM25" Version="1.0.1-beta03" />
+    <PackageVersion Include="System.Numerics.Tensors" Version="9.0.9" />
+    <PackageVersion Include="Validation" Version="2.6.68" />
+  </ItemGroup>
+
+</Project>
