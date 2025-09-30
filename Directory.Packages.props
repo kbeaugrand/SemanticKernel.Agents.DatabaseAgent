@@ -29,7 +29,7 @@
     <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.9" />
 
     <!-- Semantic Kernel packages -->
-    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.64.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Abstractions" Version="1.65.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.64.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.64.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.64.0-preview" />
